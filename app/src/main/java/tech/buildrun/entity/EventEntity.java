@@ -1,10 +1,9 @@
 package tech.buildrun.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.Set;
 
 @Entity
 public class EventEntity extends PanacheEntityBase {
@@ -12,6 +11,9 @@ public class EventEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
+
+    @OneToMany(mappedBy = "eventId")
+    public Set<SeatEntity> seats;
 
     public String name;
 

@@ -1,0 +1,25 @@
+meta {
+  name: Create Event
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/events
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Final Libertadores 2027",
+    "description": "Gloria Eterna",
+    "settings": {
+      "numberOfSeats": 5
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}

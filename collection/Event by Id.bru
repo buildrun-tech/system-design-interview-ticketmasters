@@ -1,0 +1,22 @@
+meta {
+  name: Event by Id
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:8080/events/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Final Libertadores 2025",
+    "description": "Gloria Eterna"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
