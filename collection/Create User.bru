@@ -1,0 +1,15 @@
+meta {
+  name: Create User
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8080/users
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

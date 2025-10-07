@@ -12,7 +12,7 @@ public class EventEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @OneToMany(mappedBy = "eventId")
+    @OneToMany(mappedBy = "event")
     public Set<SeatEntity> seats;
 
     public String name;

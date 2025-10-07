@@ -12,7 +12,7 @@ public class SeatEntity extends PanacheEntityBase {
 
     @ManyToOne
     @JoinColumn(name = "event_id")
-    public EventEntity eventId;
+    public EventEntity event;
 
     public String name;
 
@@ -22,8 +22,8 @@ public class SeatEntity extends PanacheEntityBase {
     public SeatEntity() {
     }
 
-    public SeatEntity(EventEntity eventId, String name, SeatStatus status) {
-        this.eventId = eventId;
+    public SeatEntity(EventEntity event, String name, SeatStatus status) {
+        this.event = event;
         this.name = name;
         this.status = status;
     }

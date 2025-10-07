@@ -1,0 +1,27 @@
+meta {
+  name: Booking
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:8080/bookings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "userId": 1,
+    "eventId": 1,
+    "seats": [
+      {
+        "seatId": 1
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

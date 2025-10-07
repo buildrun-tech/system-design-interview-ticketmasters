@@ -1,0 +1,15 @@
+meta {
+  name: List Users
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:8080/users
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

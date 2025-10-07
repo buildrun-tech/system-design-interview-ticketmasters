@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: http://localhost:8080/events/1/seats?pageSize=2&page=3
+  url: http://localhost:8080/events/1/seats
   body: none
   auth: inherit
 }
 
 params:query {
-  pageSize: 2
-  page: 3
+  ~pageSize: 2
+  ~page: 3
 }
 
 settings {
