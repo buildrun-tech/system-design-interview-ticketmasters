@@ -2,58 +2,69 @@ package tech.buildrun.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
 import tech.buildrun.controller.dto.CreateBookingDto;
 import tech.buildrun.controller.dto.ReserveSeatDto;
 import tech.buildrun.entity.*;
+import tech.buildrun.exception.ResourceNotFoundException;
+import tech.buildrun.exception.SeatAlreadyBookedException;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.slf4j.LoggerFactory.*;
+
 @ApplicationScoped
 public class BookingService {
+
+    private static final Logger logger = getLogger(BookingService.class);
 
 
     // TODO - validar cenarios de concorrencia
     @Transactional
     public Long createBooking(CreateBookingDto dto) {
 
-        // 1. recuperar todos os assentos (seats)
-        Set<Long> seatId = getSeatsId(dto);
-        var seats = findSeats(seatId);
+        validateInputs(dto);
 
-        // 2. vincular os tickets a reserva (booking)
+        Set<SeatEntity> seatsAvailable = getSeatsAvailable(dto);
+
         var bookingEntity = buildBookingEntity(dto);
         bookingEntity.persist();
 
-        // 3. criar os tickets (ticket)
-        createTickets(seats, bookingEntity);
+        createTickets(seatsAvailable, bookingEntity);
 
-        // 4. atualizar status dos assentos (seat)
-        updateSeats(seats);
+        updateSeats(seatsAvailable);
 
-        // 5. retornar o id da reserva (booking id)
         return bookingEntity.id;
     }
 
-    private static Set<Long> getSeatsId(CreateBookingDto dto) {
-        return dto.seats()
-                .stream()
-                .map(ReserveSeatDto::seatId)
-                .collect(Collectors.toSet());
+    private static Set<SeatEntity> getSeatsAvailable(CreateBookingDto dto) {
+        Set<SeatEntity> seatsAvailable = new HashSet<>();
+        dto.seats()
+                .forEach(seat -> {
+
+                        SeatEntity s = SeatEntity.findByIdOptional(seat.seatId())
+                                .map(SeatEntity.class::cast)
+                                .orElseThrow(() -> new ResourceNotFoundException("Seat not found", "Seat with id not found"));
+
+                        if (s.status == SeatStatus.BOOKED) {
+                            throw new SeatAlreadyBookedException(s.name);
+                        }
+
+                        seatsAvailable.add(s);
+                });
+        return seatsAvailable;
     }
 
-    private static Set<SeatEntity> findSeats(Set<Long> seatId) {
-        return SeatEntity.find("id in ?1", seatId)
-                .stream()
-                .map(SeatEntity.class::cast)
-                .peek(s -> {
-                    if (s.status == SeatStatus.BOOKED) {
-                        throw new RuntimeException("Seat already booked");
-                    }
-                })
-                .collect(Collectors.toSet());
+    private static void validateInputs(CreateBookingDto dto) {
+        UserEntity.findByIdOptional(dto.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found", "User with id not found"));
+
+        EventEntity.findByIdOptional(dto.eventId())
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found", "Event with id not found"));
     }
 
     private static BookingEntity buildBookingEntity(CreateBookingDto dto) {

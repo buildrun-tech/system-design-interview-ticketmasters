@@ -1,0 +1,15 @@
+services:
+  postgresqldb:
+    image: postgres:18
+    container_name: ticketmaster-postgres
+    environment:
+      POSTGRES_USER: ticketmaster
+      POSTGRES_PASSWORD: ticketmaster
+      POSTGRES_DB: ticketmasterdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
+@Table(name = "tb_tickets", schema = "public")
 public class TicketEntity extends PanacheEntityBase {
 
     @Id

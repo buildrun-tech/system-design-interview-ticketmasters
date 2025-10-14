@@ -4,6 +4,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "tb_seats", schema = "public")
 public class SeatEntity extends PanacheEntityBase {
 
     @Id
