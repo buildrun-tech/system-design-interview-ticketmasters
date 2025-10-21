@@ -1,6 +1,7 @@
 package tech.buildrun.controller;
 
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -18,7 +19,7 @@ public class BookingController {
     }
 
     @POST
-    public Response createBooking(CreateBookingDto dto) {
+    public Response createBooking(@Valid CreateBookingDto dto) {
 
         var bookingId = bookingService.createBooking(dto);
 

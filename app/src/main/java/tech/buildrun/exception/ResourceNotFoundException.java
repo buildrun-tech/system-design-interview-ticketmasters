@@ -14,9 +14,16 @@ public class ResourceNotFoundException extends TicketMasterException{
 
     @Override
     protected ProblemDetails toProblemDetails() {
+        var status = 422;
         return new ProblemDetails(
-                new ExceptionResponse("ResourceNotFoundException", title, detail),
-                422
+                new ExceptionResponse(
+                        "about:blank",
+                        title,
+                        detail,
+                        status,
+                        null
+                ),
+                status
         );
     }
 }

@@ -1,5 +1,6 @@
 package tech.buildrun.controller;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import tech.buildrun.controller.dto.*;
@@ -19,13 +20,13 @@ public class EventController {
 
     @GET
     public ApiListDto<EventDto> getEvents(@QueryParam("page") @DefaultValue("0") Integer page,
-                                @QueryParam("pageSize") @DefaultValue("10") Integer pageSize) {
+                                          @QueryParam("pageSize") @DefaultValue("10") Integer pageSize) {
 
         return eventService.findAll(page, pageSize);
     }
 
     @POST
-    public Response createEvent(CreateEventDto dto) {
+    public Response createEvent(@Valid CreateEventDto dto) {
 
         var body = eventService.createEvent(dto);
 

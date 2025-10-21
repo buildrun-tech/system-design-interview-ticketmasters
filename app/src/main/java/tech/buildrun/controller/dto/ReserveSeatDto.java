@@ -1,4 +1,6 @@
 package tech.buildrun.controller.dto;
 
-public record ReserveSeatDto(Long seatId) {
+import jakarta.validation.constraints.NotNull;
+
+public record ReserveSeatDto(@NotNull Long seatId) {
 }
