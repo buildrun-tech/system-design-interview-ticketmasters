@@ -13,7 +13,8 @@ import java.io.UncheckedIOException;
 @ApplicationScoped
 public class BookingExpirationService {
 
-    private static final int expirationCheckSeconds = 10;
+    @ConfigProperty(name = "booking.expiration.check.seconds")
+    private int expirationCheckSeconds;
 
     private final SqsClient sqsClient;
     private final String queueUrl;
