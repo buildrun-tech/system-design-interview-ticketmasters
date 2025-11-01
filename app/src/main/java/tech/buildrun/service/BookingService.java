@@ -86,8 +86,8 @@ public class BookingService {
     }
 
     private static void createTickets(Set<SeatEntity> seats, BookingEntity bookingEntity) {
-        TicketEntity ticketEntity = new TicketEntity();
         seats.forEach(seat -> {
+            TicketEntity ticketEntity = new TicketEntity();
             ticketEntity.seat = seat;
             ticketEntity.externalId = UUID.randomUUID();
             ticketEntity.booking = bookingEntity;
