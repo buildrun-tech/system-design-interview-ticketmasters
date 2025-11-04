@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2" pages="2">
   <diagram name="MER" id="F0IY-iaS7zyFx-PZKdgD">
-    <mxGraphModel dx="1810" dy="1749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1778" dy="1650" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -170,7 +170,7 @@
         <mxCell id="468hwHDUks_9oVPO9XtQ-47" value="POST - /bookings/confirm" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="935" y="590" width="230" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="468hwHDUks_9oVPO9XtQ-48" value="&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Request&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;JWT&lt;br&gt;&lt;/i&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Body:&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;{&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&quot;booking_id&quot;: &quot;&quot;,&lt;/div&gt;&lt;div&gt;}&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Response:&lt;br&gt;201 - CREATED&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=10;" parent="1" vertex="1">
+        <mxCell id="468hwHDUks_9oVPO9XtQ-48" value="&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Request&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;JWT&lt;br&gt;&lt;/i&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Body:&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;{&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&quot;booking_id&quot;: &quot;&quot;,&lt;/div&gt;&lt;div&gt;}&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Response:&lt;br&gt;204 - NO CONTENT&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=10;" parent="1" vertex="1">
           <mxGeometry x="930" y="630" width="240" height="230" as="geometry" />
         </mxCell>
         <mxCell id="468hwHDUks_9oVPO9XtQ-49" value="TTL - Time to Live" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontStyle=1" parent="1" vertex="1">

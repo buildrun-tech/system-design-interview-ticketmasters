@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Size;
 
 import java.util.Set;
 
-public record CreateBookingDto(@NotNull Long userId,
-                               @NotNull Long eventId,
+public record CreateBookingDto(@NotNull Long eventId,
                                @NotNull @Size(min = 1) Set<ReserveSeatDto> seats) {
 }

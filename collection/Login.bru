@@ -1,0 +1,23 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/auth/token
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "username": "joao",
+    "password": "123"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

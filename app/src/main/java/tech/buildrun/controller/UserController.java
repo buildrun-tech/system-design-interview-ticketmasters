@@ -1,5 +1,6 @@
 package tech.buildrun.controller;
 
+import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -15,9 +16,9 @@ public class UserController {
     @Transactional
     public void createUser() {
         var user = new UserEntity();
-        user.username = "bruno";
-        user.email = "bruno@teste.com";
-        user.password = "123";
+        user.username = "joao";
+        user.email = "joao@teste.com";
+        user.password = BcryptUtil.bcryptHash("123");
 
         user.persist();
     }

@@ -31,13 +31,13 @@ public class BookingService {
 
     // TODO - validar cenarios de concorrencia
     @Transactional
-    public Long createBooking(CreateBookingDto dto) {
+    public Long createBooking(Long userId, CreateBookingDto dto) {
 
-        validateInputs(dto);
+        validateInputs(userId, dto);
 
         Set<SeatEntity> seatsAvailable = getSeatsAvailable(dto);
 
-        var bookingEntity = buildBookingEntity(dto);
+        var bookingEntity = buildBookingEntity(userId, dto);
         bookingEntity.persist();
 
         createTickets(seatsAvailable, bookingEntity);
@@ -67,20 +67,20 @@ public class BookingService {
         return seatsAvailable;
     }
 
-    private static void validateInputs(CreateBookingDto dto) {
-        UserEntity.findByIdOptional(dto.userId())
+    private static void validateInputs(Long userId, CreateBookingDto dto) {
+        UserEntity.findByIdOptional(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found", "User with id not found"));
 
         EventEntity.findByIdOptional(dto.eventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found", "Event with id not found"));
     }
 
-    private static BookingEntity buildBookingEntity(CreateBookingDto dto) {
+    private static BookingEntity buildBookingEntity(Long userId, CreateBookingDto dto) {
         BookingEntity booking = new BookingEntity();
 
         booking.bookedAt = Instant.now();
         booking.status = BookingStatus.PENDING;
-        booking.user = UserEntity.findById(dto.userId());
+        booking.user = UserEntity.findById(userId);
 
         return booking;
     }

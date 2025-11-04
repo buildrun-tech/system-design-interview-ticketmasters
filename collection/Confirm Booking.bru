@@ -1,0 +1,22 @@
+meta {
+  name: Confirm Booking
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:8080/bookings/confirm
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "bookingId": 351
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
