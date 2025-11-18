@@ -1,18 +1,22 @@
 meta {
   name: List Events
   type: http
-  seq: 3
+  seq: 4
 }
 
 get {
   url: http://localhost:8080/events
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:query {
   ~pageSize: 1
   ~page: 3
+}
+
+auth:bearer {
+  token: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ0aWNrZXRtYXN0ZXIiLCJ1cG4iOiJicnVubyIsImdyb3VwcyI6WyJVc2VyIl0sImVtYWlsIjoiYnJ1bm9AdGVzdGUuY29tIiwiaWF0IjoxNzYyMjEzNDQ2LCJleHAiOjE3NjIyMTM3NDYsImp0aSI6Ijk3M2RiNjAwLTZjZTktNGM4MC05YjJlLTdhOThhZDY3MjYwYyJ9.EG6iVv3Ihv1a19T9PAznZo4yPnzShHZ1NHvKRAW8tyRDliXVLSbxDDuiiOjJTjvdVTenLPkNMuYO68RzIwcXUYHd8PIS58j5lP53NtYD1sPBXfrObPlKaN0U9IXTqpL2pLQ9zwbybDrgturWFeijCC0BnfrPHSAQDnGmqaIxO6D9AfxHsoCsiaPXcyf3XUL7QoUTRWKlQkZst6z27S5hE6Uq-IGbO-QbmLTqsbhXe0YXAe1b6UzdiZ0PJnXxNo6QnfcndWwRkMeU7wd-sP0wqy9SQDjLbJTQEtEp4dDXrDH6QeR0FMKJbFUEYO-avcu0ymrzaclnHFmL19oB23fN_g
 }
 
 settings {

@@ -1,10 +1,10 @@
 package tech.buildrun.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_users", schema = "public")
@@ -19,6 +19,10 @@ public class UserEntity extends PanacheEntityBase {
     public String email;
 
     public String password;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    public RoleEntity role;
 
     public UserEntity() {
     }

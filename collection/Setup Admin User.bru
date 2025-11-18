@@ -1,0 +1,24 @@
+meta {
+  name: Setup Admin User
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/setup-admin
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "username": "admin",
+    "password": "admin",
+    "email": "admin@admin.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

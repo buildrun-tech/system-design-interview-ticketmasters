@@ -1,18 +1,22 @@
 meta {
   name: List Event Seats
   type: http
-  seq: 4
+  seq: 5
 }
 
 get {
   url: http://localhost:8080/events/5/seats
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:query {
   ~pageSize: 2
   ~page: 3
+}
+
+auth:bearer {
+  token: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ0aWNrZXRtYXN0ZXIiLCJ1cG4iOiJicnVubyIsInN1YiI6IjEiLCJncm91cHMiOlsiVXNlciJdLCJlbWFpbCI6ImJydW5vQHRlc3RlLmNvbSIsImlhdCI6MTc2MjIxMzg0MywiZXhwIjoxNzYyMjE0MTQzLCJqdGkiOiJlZDcxOWI1Zi1mZTYyLTQwNjgtOTQ4NS1kYzM4MDI3YmE5MWIifQ.hzeitKc7ouPfgoDIv_BpBirJ254mMhr7DeSbX0LCr3UTjMFCHQVYA74lRYRdjfdcsWCb0DY_wPV1CR1bX23aEhs45gOWONoYEqYCfEWZwO82EQgR2TW_A8Smq5R2KGKtoRgmCKpfyRvz3GRrRewLkEyVULdgW-q6aaNPElnyqQGIp9H-kfKLUOeRzKvOO6KX3dndRrmq4kc4hP1bguCnBGGbbe9Oe0Y6bjgYXTNydDuP89DY_tfOZr8cDtg4aeoaLzhEUiy1hianv535tkw2A6uX174h2Vcw5r-8QQRUt9GXWc_7p2QP6Oj7pbneyOSFVxq7b9j4XJM19xz1huTm_g
 }
 
 settings {
