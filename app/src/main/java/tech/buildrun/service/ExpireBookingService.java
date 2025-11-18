@@ -17,7 +17,9 @@ public class ExpireBookingService {
 
         expireBooking(booking);
 
-        turnSeatsAvailable(bookingId);
+        if (booking.status != BookingStatus.CONFIRMED) {
+            turnSeatsAvailable(bookingId);
+        }
     }
 
     private static BookingEntity findBooking(Long bookingId) {
