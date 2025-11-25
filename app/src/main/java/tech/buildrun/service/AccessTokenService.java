@@ -4,6 +4,7 @@ import io.quarkus.elytron.security.common.BcryptUtil;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.enterprise.context.ApplicationScoped;
 import tech.buildrun.controller.dto.AccessTokenResponseDto;
+import tech.buildrun.controller.dto.LoginRequestDto;
 import tech.buildrun.entity.UserEntity;
 import tech.buildrun.exception.LoginException;
 import tech.buildrun.exception.ResourceNotFoundException;
@@ -17,8 +18,27 @@ public class AccessTokenService {
 
     private static final long EXPIRES_IN = 300;
 
-    public AccessTokenResponseDto getAccessToken(String username, String password) {
+    public AccessTokenResponseDto getAccessToken(LoginRequestDto dto) {
 
+        // TODO - reavaliar if-esle-if-else aqui, talvez usar Strategy Pattern
+        if (dto.grantType().equals("password")) {
+            return getAccessTokenPassword(dto.username(), dto.password());
+
+        } else if (dto.grantType().equals("client_credentials")) {
+            return getAccessTokenClientCredentials(dto.clientId(), dto.clientSecret());
+
+        } else {
+            throw new LoginException("Invalid grant type", "Possible values are 'password' or 'client_credentials'");
+        }
+
+    }
+
+    private AccessTokenResponseDto getAccessTokenClientCredentials(String clientId, String clientSecret) {
+        // TODO - Implementar grant type client credentials
+        throw new LoginException("Login Exception", "Client credentials grant type not implemented");
+    }
+
+    private AccessTokenResponseDto getAccessTokenPassword(String username, String password) {
         var user = UserEntity.find("username = ?1", username)
                 .firstResultOptional()
                 .map(UserEntity.class::cast)

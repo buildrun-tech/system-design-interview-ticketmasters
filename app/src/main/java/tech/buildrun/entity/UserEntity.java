@@ -14,8 +14,10 @@ public class UserEntity extends PanacheEntityBase {
     @GeneratedValue
     public Long id;
 
+    @Column(unique = true)
     public String username;
 
+    @Column(unique = true)
     public String email;
 
     public String password;
