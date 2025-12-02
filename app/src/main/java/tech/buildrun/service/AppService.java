@@ -43,6 +43,10 @@ public class AppService {
     }
 
     private Set<ScopeEntity> fetchScopesByName(Set<String> scopes) {
+        if (scopes == null || scopes.isEmpty()) {
+            throw new CreateEntityException("Create App Exception", "No scopes provided");
+        }
+
         Set<ScopeEntity> scopeEntities = new HashSet<>();
 
         scopes.forEach((scopeName) -> {
