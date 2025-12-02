@@ -22,7 +22,7 @@ public class AppEntity extends PanacheEntityBase {
     public UUID clientId;
 
     @Column(nullable = false)
-    public UUID clientSecret;
+    public String clientSecret;
 
     @ManyToMany
     @JoinTable(

@@ -24,9 +24,8 @@ public class AuthController {
     @POST
     @Path("/token")
     public Response getToken(@Valid LoginRequestDto dto) {
-        dto.validate(validator);
 
-        var body = accessTokenService.getAccessToken(dto);
+        var body = accessTokenService.getAccessToken(dto.grantType(), dto.identifier(), dto.secret());
 
         return Response.ok(body).build();
     }

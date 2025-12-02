@@ -76,3 +76,9 @@ Create your first JPA entity
 Easily start your REST Web Services
 
 [Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+
+
+---
+
+"clientId": "8b4ae5f6-3dcd-4605-8dee-3e816ab9b01f",
+"clientSecret": "6464c05a-7b88-411d-a267-ebe53fd85a25"

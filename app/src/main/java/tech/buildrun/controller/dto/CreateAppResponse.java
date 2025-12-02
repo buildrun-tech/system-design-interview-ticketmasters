@@ -1,4 +1,4 @@
 package tech.buildrun.controller.dto;
 
-public record CreateAppResponse(String clientId, String clientSecret) {
+public record CreateAppResponse(Long appId, String clientId, String clientSecret) {
 }

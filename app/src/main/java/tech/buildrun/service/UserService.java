@@ -6,7 +6,7 @@ import jakarta.transaction.Transactional;
 import tech.buildrun.controller.dto.CreateUserDto;
 import tech.buildrun.entity.RoleEntity;
 import tech.buildrun.entity.UserEntity;
-import tech.buildrun.exception.CreateUserException;
+import tech.buildrun.exception.CreateEntityException;
 
 @ApplicationScoped
 public class UserService {
@@ -17,7 +17,7 @@ public class UserService {
         var qtdUsers = UserEntity.count("username = ?1 OR email = ?2", dto.username(), dto.email());
 
         if (qtdUsers > 0) {
-            throw new CreateUserException("User already exists with this username or email");
+            throw new CreateEntityException("Create User Exception", "User already exists with this username or email");
         }
 
         var entity = new UserEntity();

@@ -1,5 +1,6 @@
 package tech.buildrun.controller;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -18,10 +19,13 @@ public class AppController {
     }
 
     @POST
+    @RolesAllowed("admin")
     public Response createApp(CreateAppDto dto) {
 
         var resp = appService.createApp(dto);
 
-        return Response.created(null).build();
+        var location = URI.create("/apps/"+resp.appId());
+
+        return Response.created(location).entity(resp).build();
     }
 }

@@ -1,10 +1,12 @@
 package tech.buildrun.exception;
 
-public class CreateUserException extends TicketMasterException{
+public class CreateEntityException extends TicketMasterException{
 
+    private final String title;
     private final String detail;
 
-    public CreateUserException(String detail) {
+    public CreateEntityException(String title, String detail) {
+        this.title = title;
         this.detail = detail;
     }
 
@@ -14,7 +16,7 @@ public class CreateUserException extends TicketMasterException{
         return new ProblemDetails(
                 new ExceptionResponse(
                         "about:blank",
-                        "Create User Exception",
+                        title,
                         detail,
                         status,
                         null
