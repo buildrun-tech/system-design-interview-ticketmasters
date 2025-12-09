@@ -1,11 +1,11 @@
 meta {
-  name: Booking
+  name: Reject Booking
   type: http
-  seq: 12
+  seq: 15
 }
 
 post {
-  url: http://localhost:8080/bookings
+  url: http://localhost:8080/bookings/reject
   body: json
   auth: bearer
 }
@@ -16,12 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "eventId": 1,
-    "seats": [
-      {
-        "seatId": 2
-      }
-    ]
+    "bookingId": 1
   }
 }
 

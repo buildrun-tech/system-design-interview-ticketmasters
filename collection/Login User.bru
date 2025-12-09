@@ -1,21 +1,25 @@
 meta {
-  name: Create User
+  name: Login User
   type: http
-  seq: 10
+  seq: 4
 }
 
 post {
-  url: http://localhost:8080/users
+  url: http://localhost:8080/auth/token
   body: json
   auth: inherit
 }
 
 body:json {
   {
+    "grantType": "password",
     "username": "bruno",
-    "email": "bruno@buildrun.com.br",
     "password": "1234"
   }
+}
+
+vars:post-response {
+  token: res.body.accessToken
 }
 
 settings {

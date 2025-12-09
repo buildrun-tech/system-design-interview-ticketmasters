@@ -16,8 +16,6 @@ public class ExpireBookingService {
         var booking = findBooking(bookingId);
 
         expireBooking(booking);
-
-        turnSeatsAvailable(bookingId);
     }
 
     private static BookingEntity findBooking(Long bookingId) {
@@ -30,6 +28,8 @@ public class ExpireBookingService {
         if (booking.status == BookingStatus.PENDING) {
             booking.status = BookingStatus.EXPIRED;
             booking.persist();
+
+            turnSeatsAvailable(booking.id);
         }
     }
 

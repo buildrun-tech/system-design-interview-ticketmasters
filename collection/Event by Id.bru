@@ -1,13 +1,17 @@
 meta {
   name: Event by Id
   type: http
-  seq: 7
+  seq: 9
 }
 
 get {
-  url: http://localhost:8080/events/1
+  url: http://localhost:8080/events/6
   body: none
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {

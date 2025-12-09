@@ -1,19 +1,23 @@
 meta {
   name: Create Event
   type: http
-  seq: 6
+  seq: 8
 }
 
 post {
   url: http://localhost:8080/events
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {
   {
-    "name": "Final Libertadores 2025 Part 2",
-    "description": "Gloria Eterna",
+    "name": "Final do Mundial",
+    "description": "FIFA",
     "settings": {
       "numberOfSeats": 3
     }

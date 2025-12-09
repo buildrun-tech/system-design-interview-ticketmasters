@@ -1,7 +1,7 @@
 meta {
-  name: Login
+  name: Login Admin
   type: http
-  seq: 3
+  seq: 5
 }
 
 post {
@@ -12,8 +12,14 @@ post {
 
 body:json {
   {
-    "grantType": "password"
+    "grantType": "password",
+  "username": "admin",
+  "password": "admin"
   }
+}
+
+vars:post-response {
+  token: res.body.accessToken
 }
 
 settings {

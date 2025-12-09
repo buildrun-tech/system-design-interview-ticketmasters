@@ -12,23 +12,25 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import tech.buildrun.controller.dto.BookingResponseDto;
 import tech.buildrun.controller.dto.ConfirmBookingDto;
 import tech.buildrun.controller.dto.CreateBookingDto;
+import tech.buildrun.controller.dto.RejectBookingDto;
+import tech.buildrun.entity.BookingStatus;
 import tech.buildrun.service.BookingService;
-import tech.buildrun.service.ConfirmBookingService;
+import tech.buildrun.service.UpdateBookingStatusService;
 
 @Path( "/bookings")
 public class BookingController {
 
     private final BookingService bookingService;
-    private final ConfirmBookingService confirmBookingService;
+    private final UpdateBookingStatusService updateBookingStatusService;
 
     public BookingController(BookingService bookingService,
-                             ConfirmBookingService confirmBookingService) {
+                             UpdateBookingStatusService updateBookingStatusService) {
         this.bookingService = bookingService;
-        this.confirmBookingService = confirmBookingService;
+        this.updateBookingStatusService = updateBookingStatusService;
     }
 
     @POST
-    @RolesAllowed("User")
+    @RolesAllowed({"admin", "bookings:reserve"})
     public Response createBooking(@Context SecurityContext ctx,
                                   @Valid CreateBookingDto dto) {
 
@@ -40,10 +42,21 @@ public class BookingController {
     }
 
     @POST
+    @RolesAllowed({"admin", "bookings:confirm"})
     @Path("/confirm")
     public Response confirmBooking(@Valid ConfirmBookingDto dto) {
 
-        confirmBookingService.confirmBooking(dto.bookingId());
+        updateBookingStatusService.updateBookingStatus(dto.bookingId(), BookingStatus.CONFIRMED);
+
+        return Response.noContent().build();
+    }
+
+    @POST
+    @RolesAllowed({"admin", "bookings:reject"})
+    @Path("/reject")
+    public Response rejectBooking(@Valid RejectBookingDto dto) {
+
+        updateBookingStatusService.updateBookingStatus(dto.bookingId(), BookingStatus.REJECTED);
 
         return Response.noContent().build();
     }

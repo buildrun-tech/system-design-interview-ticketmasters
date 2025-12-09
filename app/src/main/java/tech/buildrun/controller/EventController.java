@@ -1,5 +1,6 @@
 package tech.buildrun.controller;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
@@ -26,6 +27,7 @@ public class EventController {
     }
 
     @POST
+    @RolesAllowed({"admin", "events:create"})
     public Response createEvent(@Valid CreateEventDto dto) {
 
         var body = eventService.createEvent(dto);
@@ -36,6 +38,7 @@ public class EventController {
     }
 
     @GET
+    @RolesAllowed({"admin", "events:read"})
     @Path("/{id}")
     public Response getEvent(@PathParam("id") Long id) {
 
@@ -47,6 +50,7 @@ public class EventController {
     }
 
     @GET
+    @RolesAllowed({"admin", "seats:list"})
     @Path("/{id}/seats")
     public ApiListDto<SeatDto> getSeats(@PathParam("id") Long id,
                                         @QueryParam("page") @DefaultValue("0") Integer page,

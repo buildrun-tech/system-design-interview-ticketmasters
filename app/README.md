@@ -80,5 +80,5 @@ Easily start your REST Web Services
 
 ---
 
-"clientId": "8b4ae5f6-3dcd-4605-8dee-3e816ab9b01f",
-"clientSecret": "6464c05a-7b88-411d-a267-ebe53fd85a25"
+"clientId": "44204916-d891-41e4-a864-f8a26893f858",
+"clientSecret": "cdd70611-e698-4e48-91fc-1c17848da5a1"

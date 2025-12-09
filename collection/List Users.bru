@@ -1,13 +1,17 @@
 meta {
   name: List Users
   type: http
-  seq: 9
+  seq: 11
 }
 
 get {
   url: http://localhost:8080/users
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 settings {

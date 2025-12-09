@@ -1,18 +1,22 @@
 meta {
   name: Confirm Booking
   type: http
-  seq: 11
+  seq: 13
 }
 
 post {
   url: http://localhost:8080/bookings/confirm
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {
   {
-    "bookingId": 351
+    "bookingId": 51
   }
 }
 

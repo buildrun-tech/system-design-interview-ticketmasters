@@ -1,0 +1,28 @@
+meta {
+  name: Login PayGTW
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/auth/token
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "grantType": "client_credentials",
+    "clientId": "44204916-d891-41e4-a864-f8a26893f858",
+    "clientSecret": "cdd70611-e698-4e48-91fc-1c17848da5a1"
+  }
+}
+
+vars:post-response {
+  token: res.body.accessToken
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

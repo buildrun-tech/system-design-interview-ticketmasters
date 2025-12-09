@@ -1,6 +1,7 @@
 package tech.buildrun.controller;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.GET;
@@ -34,6 +35,7 @@ public class UserController {
     }
 
     @GET
+    @RolesAllowed("admin")
     public List<UserEntity> getUsers() {
         return UserEntity.listAll();
     }
