@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.slf4j.LoggerFactory.*;
 
@@ -21,6 +23,8 @@ import static org.slf4j.LoggerFactory.*;
 public class BookingService {
 
     private static final Logger logger = getLogger(BookingService.class);
+
+    private static final ConcurrentHashMap<String, ReentrantLock> seatLocks = new ConcurrentHashMap<>();
 
     private final BookingExpirationService bookingExpirationService;
 
@@ -35,18 +39,33 @@ public class BookingService {
 
         validateInputs(userId, dto);
 
-        Set<SeatEntity> seatsAvailable = getSeatsAvailable(dto);
+        Long seatId = dto.seats().iterator().next().seatId();
 
-        var bookingEntity = buildBookingEntity(userId, dto);
-        bookingEntity.persist();
+        String lockKey = dto.eventId() + ":" + seatId;
 
-        createTickets(seatsAvailable, bookingEntity);
+        ReentrantLock lock = seatLocks.computeIfAbsent(lockKey, k -> new ReentrantLock(true));
 
-        updateSeats(seatsAvailable);
+        if (!lock.tryLock())
+            throw new SeatAlreadyBookedException("seatId=" + seatId);
 
-        bookingExpirationService.scheduleExpirationCheck(bookingEntity.id);
+        try {
+            Set<SeatEntity> seatsAvailable = getSeatsAvailable(dto);
 
-        return bookingEntity.id;
+            var bookingEntity = buildBookingEntity(userId, dto);
+            bookingEntity.persist();
+
+            createTickets(seatsAvailable, bookingEntity);
+
+            updateSeats(seatsAvailable);
+
+            bookingEntity.getEntityManager().flush();
+
+            bookingExpirationService.scheduleExpirationCheck(bookingEntity.id);
+
+            return bookingEntity.id;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private static Set<SeatEntity> getSeatsAvailable(CreateBookingDto dto) {
