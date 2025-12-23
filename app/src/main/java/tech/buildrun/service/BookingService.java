@@ -1,6 +1,7 @@
 package tech.buildrun.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import tech.buildrun.controller.dto.CreateBookingDto;
@@ -28,10 +29,16 @@ public class BookingService {
         this.bookingExpirationService = bookingExpirationService;
     }
 
-
-    // TODO - validar cenarios de concorrencia
     @Transactional
     public Long createBooking(Long userId, CreateBookingDto dto) {
+
+        var seatIds = dto.seats().stream().map(ReserveSeatDto::seatId).toList();
+
+        logger.atInfo()
+                .addKeyValue("userId", userId)
+                .addKeyValue("eventId", dto.eventId())
+                .addKeyValue("seats", seatIds)
+                .log("Start booking");
 
         validateInputs(userId, dto);
 
@@ -46,6 +53,13 @@ public class BookingService {
 
         bookingExpirationService.scheduleExpirationCheck(bookingEntity.id);
 
+        logger.atInfo()
+                .addKeyValue("userId", userId)
+                .addKeyValue("eventId", dto.eventId())
+                .addKeyValue("seats", seatIds)
+                .addKeyValue("bookingId", bookingEntity.id)
+                .log("Booking finished");
+
         return bookingEntity.id;
     }
 
@@ -54,7 +68,7 @@ public class BookingService {
         dto.seats()
                 .forEach(seat -> {
 
-                        SeatEntity s = SeatEntity.findByIdOptional(seat.seatId())
+                        SeatEntity s = SeatEntity.findByIdOptional(seat.seatId(), LockModeType.PESSIMISTIC_WRITE)
                                 .map(SeatEntity.class::cast)
                                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found", "Seat with id not found"));
 

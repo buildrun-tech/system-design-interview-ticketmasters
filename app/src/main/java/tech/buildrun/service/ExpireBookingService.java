@@ -1,6 +1,7 @@
 package tech.buildrun.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import tech.buildrun.entity.*;
 import tech.buildrun.exception.ResourceNotFoundException;
@@ -19,7 +20,7 @@ public class ExpireBookingService {
     }
 
     private static BookingEntity findBooking(Long bookingId) {
-        return BookingEntity.findByIdOptional(bookingId)
+        return BookingEntity.findByIdOptional(bookingId, LockModeType.PESSIMISTIC_WRITE)
                 .map(BookingEntity.class::cast)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found", "Booking with id not found"));
     }

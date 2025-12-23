@@ -2,19 +2,17 @@ package tech.buildrun;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.maven.shared.utils.StringUtils;
 import org.junit.jupiter.api.Test;
 import tech.buildrun.util.DynamicKeyCounter;
 
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
 public class DoubleBookingTest {
@@ -31,7 +29,7 @@ public class DoubleBookingTest {
     @Test
     void success() throws InterruptedException {
 
-        int N = 5;
+        int N = 1500;
         int eventId = 1;
         int seatId = 3;
         var dynamicKeyCounter = new DynamicKeyCounter();
@@ -63,7 +61,14 @@ public class DoubleBookingTest {
 
                 startSignal.await();
 
+                var startTime = Instant.now().toEpochMilli();
+
                 var statusCode = bookEvent(eventId, seatId, token);
+
+                var endTime = Instant.now().toEpochMilli();
+
+                System.out.println(LocalTime.now() + " " + name + " terminou em " +
+                        (endTime - startTime) + " ms com status " + statusCode);
 
                 dynamicKeyCounter.increment(String.valueOf(statusCode));
 
@@ -78,7 +83,11 @@ public class DoubleBookingTest {
         return task;
     }
 
-    private static void dispatchVirtualThreads(int N, Runnable task, CountDownLatch startSignal, CountDownLatch doneSignal) throws InterruptedException {
+    private static void dispatchVirtualThreads(int N,
+                                               Runnable task,
+                                               CountDownLatch startSignal,
+                                               CountDownLatch doneSignal) throws InterruptedException {
+
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
             for (int i = 0; i < N; i++) {
@@ -86,7 +95,7 @@ public class DoubleBookingTest {
             }
 
             // Só para garantir que várias já estejam esperando antes de liberar
-            Thread.sleep(500);
+            Thread.sleep(1500);
 
             System.out.println("\n=== LIBERANDO TODAS AO MESMO TEMPO! ===\n");
             startSignal.countDown();
