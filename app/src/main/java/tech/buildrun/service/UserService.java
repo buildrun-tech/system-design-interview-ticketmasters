@@ -26,7 +26,7 @@ public class UserService {
         entity.password = BcryptUtil.bcryptHash(dto.password());
         entity.role = RoleEntity.find("name = ?1", "user").firstResult();
 
-        entity.persist();
+        UserEntity.persist(entity);
 
         return entity;
     }
