@@ -17,7 +17,7 @@ ON CONFLICT (scope_id) DO NOTHING;
 INSERT INTO tb_roles (role_id, name) VALUES
         (1, 'user'),
         (2, 'admin'),
-        (3, 'payment_gtw'),
+        (3, 'payment_gtw')
 ON CONFLICT (role_id) DO NOTHING;
 
 -- Role User
@@ -31,5 +31,5 @@ ON CONFLICT (role_id, scope_id) DO NOTHING;
 -- Role Payment Gateway
 INSERT INTO tb_role_scopes (role_id, scope_id) VALUES
                                                    (3, 5),
-                                                   (3, 6),
+                                                   (3, 6)
 ON CONFLICT (role_id, scope_id) DO NOTHING;
