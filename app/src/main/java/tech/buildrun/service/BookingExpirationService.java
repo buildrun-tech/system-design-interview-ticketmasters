@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import tech.buildrun.service.dto.CheckBookingStateDto;
 
@@ -21,11 +22,18 @@ public class BookingExpirationService {
     private final ObjectMapper objectMapper;
 
     public BookingExpirationService(SqsClient sqsClient,
-                                    @ConfigProperty(name = "queue.check-booking-pending-state.url") String queueUrl,
+                                    @ConfigProperty(name = "queue.check-booking-pending-state.name") String queueName,
                                     ObjectMapper objectMapper) {
         this.sqsClient = sqsClient;
-        this.queueUrl = queueUrl;
+        this.queueUrl = resolveQueueUrl(queueName);
         this.objectMapper = objectMapper;
+    }
+
+    private String resolveQueueUrl(String queueName) {
+        return sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
+                .queueName(queueName)
+                .build())
+            .queueUrl();
     }
 
     public void scheduleExpirationCheck(Long bookingId) {
