@@ -1,0 +1,367 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop    # DEV environment
+      - main       # PROD environment
+  pull_request:
+    branches:
+      - develop
+      - main
+
+env:
+  # Environment detection based on branch
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  AWS_REGION: us-east-1
+  
+  # Configuration flags (can be overridden via repository variables)
+  TERRAFORM_ACTION: ${{ vars.TERRAFORM_ACTION || 'apply' }}  # apply or destroy
+  DESTROY_INFRASTRUCTURE: ${{ vars.DESTROY_INFRASTRUCTURE || 'false' }}
+
+# Required permissions for OIDC token
+permissions:
+  id-token: write   # Required for OIDC authentication with AWS
+  contents: read    # Required to checkout repository
+  actions: read     # Required for workflow execution
+  security-events: write  # Required for security scanning
+
+jobs:
+  # Environment setup and validation
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env-setup.outputs.environment }}
+      aws-role-arn: ${{ steps.env-setup.outputs.aws-role-arn }}
+      should-build: ${{ steps.env-setup.outputs.should-build }}
+      should-promote: ${{ steps.env-setup.outputs.should-promote }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Environment Setup and Validation
+        id: env-setup
+        run: |
+          echo "Setting up environment for: ${{ env.ENVIRONMENT }}"
+          
+          # Environment-specific configuration
+          if [ "${{ env.ENVIRONMENT }}" = "prod" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "aws-role-arn=${{ secrets.AWS_ROLE_ARN_PROD }}" >> $GITHUB_OUTPUT
+            echo "should-build=false" >> $GITHUB_OUTPUT
+            echo "should-promote=true" >> $GITHUB_OUTPUT
+            echo "🚀 PROD Environment - Image promotion workflow"
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "aws-role-arn=${{ secrets.AWS_ROLE_ARN_DEV }}" >> $GITHUB_OUTPUT
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "should-promote=false" >> $GITHUB_OUTPUT
+            echo "🔧 DEV Environment - Full build workflow"
+          fi
+          
+          # Validate required secrets
+          if [ -z "${{ secrets.AWS_ROLE_ARN_DEV }}" ] && [ "${{ env.ENVIRONMENT }}" = "dev" ]; then
+            echo "❌ Missing AWS_ROLE_ARN_DEV secret"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.AWS_ROLE_ARN_PROD }}" ] && [ "${{ env.ENVIRONMENT }}" = "prod" ]; then
+            echo "❌ Missing AWS_ROLE_ARN_PROD secret"
+            exit 1
+          fi
+          
+          # Configuration validation
+          echo "Terraform Action: ${{ env.TERRAFORM_ACTION }}"
+          echo "Destroy Infrastructure: ${{ env.DESTROY_INFRASTRUCTURE }}"
+          
+          # PROD environment protection
+          if [ "${{ env.ENVIRONMENT }}" = "prod" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "❌ PROD deployments not allowed from pull requests"
+              exit 1
+            fi
+            
+            if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+              echo "❌ PROD deployments only allowed from main branch"
+              exit 1
+            fi
+            
+            echo "✅ PROD environment protection checks passed"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.env-setup.outputs.aws-role-arn }}
+          role-session-name: GitHubActions-Setup
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS CLI setup
+        run: |
+          echo "🔧 Verifying AWS CLI setup..."
+          aws --version
+          aws sts get-caller-identity
+          echo "✅ AWS CLI configured successfully"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+          terraform_wrapper: false
+
+      - name: Verify Terraform setup
+        run: |
+          echo "🔧 Verifying Terraform setup..."
+          terraform version
+          echo "✅ Terraform configured successfully"
+
+      - name: Verify Maven setup
+        working-directory: ./app
+        run: |
+          echo "🔧 Verifying Maven setup..."
+          ./mvnw --version
+          echo "✅ Maven configured successfully with Java 21"
+
+  # Build and test job (DEV environment only)
+  build-and-test:
+    name: Build and Test (DEV)
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should-build == 'true'
+    outputs:
+      jar-artifact: ${{ steps.build.outputs.jar-artifact }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Restore Maven dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Maven tests
+        working-directory: ./app
+        run: |
+          echo "🧪 Running Maven tests..."
+          ./mvnw test --batch-mode --fail-at-end
+          echo "✅ All tests passed"
+
+      - name: Build application package
+        id: build
+        working-directory: ./app
+        run: |
+          echo "🔨 Building application package..."
+          ./mvnw package -DskipTests --batch-mode
+          
+          # Find the generated JAR file
+          JAR_FILE=$(find target -name "*-runner.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ No JAR file found in target directory"
+            exit 1
+          fi
+          
+          echo "jar-artifact=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "✅ Build completed: $JAR_FILE"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: app/target/*-runner.jar
+          retention-days: 1
+
+  # Docker build job (DEV environment only)
+  docker-build:
+    name: Build Docker Image (DEV)
+    runs-on: ubuntu-latest
+    needs: [setup, build-and-test]
+    if: needs.setup.outputs.should-build == 'true'
+    outputs:
+      image-tag: ${{ steps.docker.outputs.image-tag }}
+      image-digest: ${{ steps.docker.outputs.image-digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: app/target/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ needs.setup.outputs.aws-role-arn }}
+          role-session-name: GitHubActions-DockerBuild
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        id: docker
+        working-directory: ./app
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY_DEV || 'ticketmaster-dev' }}
+          IMAGE_TAG: ${{ github.sha }}-dev
+        run: |
+          echo "🐳 Building Docker image..."
+          
+          # Build image using existing Dockerfile.jvm
+          docker build -f src/main/docker/Dockerfile.jvm -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest-dev
+          
+          echo "📤 Pushing image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest-dev
+          
+          # Get image digest for immutable reference
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG | cut -d'@' -f2)
+          
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image-digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
+          echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+  # Image promotion job (PROD environment only)
+  image-promotion:
+    name: Promote Image (PROD)
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should-promote == 'true'
+    outputs:
+      promoted-image-tag: ${{ steps.promote.outputs.promoted-image-tag }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ needs.setup.outputs.aws-role-arn }}
+          role-session-name: GitHubActions-ImagePromotion
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Promote DEV image to PROD
+        id: promote
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_DEV: ${{ vars.ECR_REPOSITORY_DEV || 'ticketmaster-dev' }}
+          ECR_REPOSITORY_PROD: ${{ vars.ECR_REPOSITORY_PROD || 'ticketmaster-prod' }}
+          DEV_IMAGE_TAG: ${{ github.sha }}-dev
+          PROD_IMAGE_TAG: ${{ github.sha }}-prod
+        run: |
+          echo "🔄 Promoting DEV image to PROD..."
+          
+          # Verify DEV image exists
+          if ! aws ecr describe-images --repository-name $ECR_REPOSITORY_DEV --image-ids imageTag=$DEV_IMAGE_TAG >/dev/null 2>&1; then
+            echo "❌ DEV image not found: $ECR_REPOSITORY_DEV:$DEV_IMAGE_TAG"
+            echo "Please ensure the corresponding DEV build has completed successfully."
+            exit 1
+          fi
+          
+          # Pull DEV image
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY_DEV:$DEV_IMAGE_TAG
+          
+          # Retag for PROD
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_DEV:$DEV_IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_PROD:$PROD_IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_DEV:$DEV_IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_PROD:latest-prod
+          
+          # Push PROD tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_PROD:$PROD_IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_PROD:latest-prod
+          
+          echo "promoted-image-tag=$PROD_IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Image promoted: $ECR_REGISTRY/$ECR_REPOSITORY_PROD:$PROD_IMAGE_TAG"
+          echo "📋 Audit: Promoted $ECR_REPOSITORY_DEV:$DEV_IMAGE_TAG to $ECR_REPOSITORY_PROD:$PROD_IMAGE_TAG"
+
+  # Infrastructure management placeholder
+  infrastructure:
+    name: Manage Infrastructure
+    runs-on: ubuntu-latest
+    needs: [setup]
+    if: always() && !cancelled() && !failure()
+    steps:
+      - name: Infrastructure Placeholder
+        run: |
+          echo "🏗️ Infrastructure management for ${{ needs.setup.outputs.environment }} environment"
+          echo "Terraform Action: ${{ env.TERRAFORM_ACTION }}"
+          echo "This will be implemented in subsequent tasks"
+
+  # Deployment placeholder
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [setup, infrastructure]
+    if: always() && !cancelled() && !failure()
+    steps:
+      - name: Deployment Placeholder
+        run: |
+          echo "🚀 Deployment to ${{ needs.setup.outputs.environment }} environment"
+          echo "This will be implemented in subsequent tasks"
+
+  # Final status report
+  status:
+    name: Pipeline Status
+    runs-on: ubuntu-latest
+    needs: [setup, build-and-test, docker-build, image-promotion, infrastructure, deploy]
+    if: always()
+    steps:
+      - name: Report Pipeline Status
+        run: |
+          echo "📊 Pipeline Execution Summary"
+          echo "Environment: ${{ needs.setup.outputs.environment }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Terraform Action: ${{ env.TERRAFORM_ACTION }}"
+          
+          if [ "${{ needs.setup.outputs.environment }}" = "dev" ]; then
+            echo "DEV Pipeline Status:"
+            echo "- Setup: ${{ needs.setup.result }}"
+            echo "- Build & Test: ${{ needs.build-and-test.result }}"
+            echo "- Docker Build: ${{ needs.docker-build.result }}"
+          else
+            echo "PROD Pipeline Status:"
+            echo "- Setup: ${{ needs.setup.result }}"
+            echo "- Image Promotion: ${{ needs.image-promotion.result }}"
+          fi
+          
+          echo "- Infrastructure: ${{ needs.infrastructure.result }}"
+          echo "- Deploy: ${{ needs.deploy.result }}"
+          
+          # Check for any failures
+          if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ]; then
+            echo "❌ Pipeline completed with failures"
+            exit 1
+          else
+            echo "✅ Pipeline completed successfully"
+          fi
