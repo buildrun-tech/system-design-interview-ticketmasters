@@ -135,6 +135,7 @@ jobs:
         working-directory: ./app
         run: |
           echo "🔧 Verifying Maven setup..."
+          chmod +x ./mvnw
           ./mvnw --version
           echo "✅ Maven configured successfully with Java 21"
 
