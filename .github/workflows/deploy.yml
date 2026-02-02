@@ -170,6 +170,7 @@ jobs:
         working-directory: ./app
         run: |
           echo "🧪 Running Maven tests..."
+          chmod +x ./mvnw
           ./mvnw test --batch-mode --fail-at-end
           echo "✅ All tests passed"
 
