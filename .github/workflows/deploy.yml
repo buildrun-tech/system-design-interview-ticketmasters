@@ -182,7 +182,7 @@ jobs:
           ./mvnw package -DskipTests --batch-mode
           
           # Find the generated JAR file
-          JAR_FILE=$(find target -name "*-runner.jar" | head -1)
+          JAR_FILE=$(find target -name "*.jar" | head -1)
           if [ -z "$JAR_FILE" ]; then
             echo "❌ No JAR file found in target directory"
             exit 1
