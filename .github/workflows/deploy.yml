@@ -170,6 +170,7 @@ jobs:
         working-directory: ./app
         run: |
           echo "🔧 Verifying Maven setup..."
+          chmod +x ./mvnw
           ./mvnw --version
           echo "✅ Maven configured successfully with Java 21"
 
@@ -204,6 +205,7 @@ jobs:
         working-directory: ./app
         run: |
           echo "🧪 Running Maven tests..."
+          chmod +x ./mvnw
           ./mvnw test --batch-mode --fail-at-end
           echo "✅ All tests passed"
 
@@ -215,7 +217,7 @@ jobs:
           ./mvnw package -DskipTests --batch-mode
           
           # Find the generated JAR file
-          JAR_FILE=$(find target -name "*-runner.jar" | head -1)
+          JAR_FILE=$(find target -name "*.jar" | head -1)
           if [ -z "$JAR_FILE" ]; then
             echo "❌ No JAR file found in target directory"
             exit 1
@@ -228,7 +230,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: application-jar
-          path: app/target/*-runner.jar
+          path: app/target/*.jar
           retention-days: 1
 
   # Docker build job (DEV environment only)
@@ -237,6 +239,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup, build-and-test]
     if: needs.setup.outputs.should-build == 'true'
+    permissions:
+      id-token: write   # Required for OIDC authentication with AWS
+      contents: read    # Required to checkout repository
     outputs:
       image-tag: ${{ steps.docker.outputs.image-tag }}
       image-digest: ${{ steps.docker.outputs.image-digest }}
@@ -292,6 +297,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     if: needs.setup.outputs.should-promote == 'true'
+    permissions:
+      id-token: write   # Required for OIDC authentication with AWS
+      contents: read    # Required to checkout repository
     outputs:
       promoted-image-tag: ${{ steps.promote.outputs.promoted-image-tag }}
     steps:
