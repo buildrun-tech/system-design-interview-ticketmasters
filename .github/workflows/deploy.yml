@@ -241,6 +241,10 @@ jobs:
         run: |
           echo "🐳 Building Docker image..."
           
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          echo "ECR_REPOSITORY: $ECR_REPOSITORY"
+          echo "IMAGE_TAG: $IMAGE_TAG"
+          
           # Build image using existing Dockerfile.jvm
           docker build -f src/main/docker/Dockerfile.jvm -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest-dev
