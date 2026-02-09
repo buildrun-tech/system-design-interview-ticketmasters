@@ -63,16 +63,16 @@ module "networking" {
 }
 
 # ECR Module
-module "ecr" {
-  source = "./modules/ecr"
+# module "ecr" {
+#   source = "./modules/ecr"
 
-  name_prefix          = local.name_prefix
-  common_tags         = local.common_tags
-  repository_name     = var.ecr_repository_name
-  image_tag_mutability = var.ecr_image_tag_mutability
-  lifecycle_policy    = var.ecr_lifecycle_policy
-  aws_account_id      = data.aws_caller_identity.current.account_id
-}
+#   name_prefix          = local.name_prefix
+#   common_tags         = local.common_tags
+#   repository_name     = var.ecr_repository_name
+#   image_tag_mutability = var.ecr_image_tag_mutability
+#   lifecycle_policy    = var.ecr_lifecycle_policy
+#   aws_account_id      = data.aws_caller_identity.current.account_id
+# }
 
 # RDS Module
 module "rds" {
