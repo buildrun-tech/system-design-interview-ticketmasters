@@ -195,7 +195,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: application-jar
-          path: app/target/*.jar
+          path: app/target/quarkus-app/
           retention-days: 1
 
   # Docker build job (DEV environment only)
@@ -218,7 +218,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: application-jar
-          path: app/target/
+          path: app/target/quarkus-app/
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
