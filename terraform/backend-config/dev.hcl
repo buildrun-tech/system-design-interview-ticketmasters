@@ -2,7 +2,7 @@
 
 bucket         = "terraform-311141562939-statefile"
 key            = "dev/terraform.tfstate"
-region         = "us-east-1"
+region         = "us-east-2"
 encrypt        = true
 dynamodb_table = "311141562939-terraform-lock"
 
