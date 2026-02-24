@@ -143,7 +143,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ steps.env-setup.outputs.aws-role-arn }}
+          role-to-assume: ${{ env.ENVIRONMENT == 'prod' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN_DEV }}
           role-session-name: GitHubActions-Setup
           aws-region: ${{ env.AWS_REGION }}
 
@@ -310,7 +310,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ needs.setup.outputs.aws-role-arn }}
+          role-to-assume: ${{ env.ENVIRONMENT == 'prod' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN_DEV }}
           role-session-name: GitHubActions-ImagePromotion
           aws-region: ${{ env.AWS_REGION }}
 
@@ -367,7 +367,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ needs.setup.outputs.aws-role-arn }}
+          role-to-assume: ${{ env.ENVIRONMENT == 'prod' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN_DEV }}
           role-session-name: GitHubActions-Infrastructure
           aws-region: ${{ env.AWS_REGION }}
 
