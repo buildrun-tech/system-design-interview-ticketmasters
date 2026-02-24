@@ -2,19 +2,11 @@
 
 # Core Configuration
 environment = "dev"
-aws_region  = "us-east-1"
+aws_region  = "us-east-2"
 
 # Networking Configuration (using existing VPC)
 # Replace these with your actual VPC and subnet IDs
-vpc_id = "vpc-xxxxxxxxx"  # Replace with your VPC ID
-public_subnet_ids = [
-  "subnet-xxxxxxxxx",     # Replace with your public subnet IDs
-  "subnet-yyyyyyyyy"
-]
-private_subnet_ids = [
-  "subnet-zzzzzzzzz",     # Replace with your private subnet IDs
-  "subnet-aaaaaaaaa"
-]
+vpc_id = "vpc-088d5d306dd51edda"  # Replace with your VPC ID
 
 # ECR Configuration
 ecr_repository_url = "311141562939.dkr.ecr.us-east-2.amazonaws.com/ticketmaster-dev"

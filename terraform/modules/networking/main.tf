@@ -5,30 +5,6 @@ data "aws_vpc" "existing" {
   id = var.vpc_id
 }
 
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id]
-  }
-  
-  filter {
-    name   = "subnet-id"
-    values = var.public_subnet_ids
-  }
-}
-
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id]
-  }
-  
-  filter {
-    name   = "subnet-id"
-    values = var.private_subnet_ids
-  }
-}
-
 # Security Group for Application Load Balancer
 resource "aws_security_group" "alb" {
   name_prefix = "${var.name_prefix}-alb-"
