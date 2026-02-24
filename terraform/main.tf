@@ -55,8 +55,6 @@ module "networking" {
   name_prefix         = local.name_prefix
   common_tags        = local.common_tags
   vpc_id             = var.vpc_id
-  public_subnet_ids  = var.public_subnet_ids
-  private_subnet_ids = var.private_subnet_ids
   allowed_cidr_blocks = var.allowed_cidr_blocks
   container_port     = var.container_port
   db_port           = var.db_port
