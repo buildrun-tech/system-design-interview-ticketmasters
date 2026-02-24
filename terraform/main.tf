@@ -62,17 +62,6 @@ module "networking" {
   db_port           = var.db_port
 }
 
-# ECR Module
-# module "ecr" {
-#   source = "./modules/ecr"
-
-#   name_prefix          = local.name_prefix
-#   common_tags         = local.common_tags
-#   repository_name     = var.ecr_repository_name
-#   image_tag_mutability = var.ecr_image_tag_mutability
-#   lifecycle_policy    = var.ecr_lifecycle_policy
-#   aws_account_id      = data.aws_caller_identity.current.account_id
-# }
 
 # RDS Module
 module "rds" {
@@ -113,7 +102,7 @@ module "ecs" {
   task_memory                     = var.ecs_task_memory
   desired_count                   = var.ecs_desired_count
   container_port                  = var.container_port
-  ecr_repository_url              = module.ecr.repository_url
+  ecr_repository_url              = var.ecr_repository_url
   db_endpoint                     = module.rds.endpoint
   db_name                         = var.db_name
   db_username                     = var.db_username

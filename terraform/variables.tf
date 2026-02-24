@@ -23,56 +23,10 @@ variable "aws_region" {
 }
 
 # ECR Configuration
-variable "ecr_repository_name" {
-  description = "Name of the ECR repository"
+variable "ecr_repository_url" {
+  description = "URL of the ECR repository"
   type        = string
   default     = "ticketmaster-app"
-}
-
-variable "ecr_image_tag_mutability" {
-  description = "Image tag mutability setting for ECR repository"
-  type        = string
-  default     = "MUTABLE"
-  validation {
-    condition     = contains(["MUTABLE", "IMMUTABLE"], var.ecr_image_tag_mutability)
-    error_message = "ECR image tag mutability must be either 'MUTABLE' or 'IMMUTABLE'."
-  }
-}
-
-variable "ecr_lifecycle_policy" {
-  description = "Lifecycle policy for ECR repository"
-  type        = string
-  default     = <<EOF
-{
-  "rules": [
-    {
-      "rulePriority": 1,
-      "description": "Keep last 10 images",
-      "selection": {
-        "tagStatus": "tagged",
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": {
-        "type": "expire"
-      }
-    },
-    {
-      "rulePriority": 2,
-      "description": "Delete untagged images older than 1 day",
-      "selection": {
-        "tagStatus": "untagged",
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": 1
-      },
-      "action": {
-        "type": "expire"
-      }
-    }
-  ]
-}
-EOF
 }
 
 # ECS Configuration

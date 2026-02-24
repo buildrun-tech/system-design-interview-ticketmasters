@@ -17,8 +17,7 @@ private_subnet_ids = [
 ]
 
 # ECR Configuration
-ecr_repository_name      = "ticketmaster-app"
-ecr_image_tag_mutability = "MUTABLE"
+ecr_repository_url = "311141562939.dkr.ecr.us-east-2.amazonaws.com/ticketmaster-dev"
 
 # ECS Configuration
 ecs_cluster_name  = "ticketmaster-dev-cluster"
