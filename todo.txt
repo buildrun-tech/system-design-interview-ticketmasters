@@ -1,0 +1,1 @@
+- [ ] Avaliar uso do Lock no Bucket S3 ao invés do DynamoDB
