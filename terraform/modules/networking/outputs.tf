@@ -10,16 +10,6 @@ output "vpc_cidr_block" {
   value       = data.aws_vpc.existing.cidr_block
 }
 
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = var.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = var.private_subnet_ids
-}
-
 output "alb_security_group_id" {
   description = "ID of the ALB security group"
   value       = aws_security_group.alb.id
