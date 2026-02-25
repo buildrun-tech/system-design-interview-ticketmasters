@@ -79,16 +79,6 @@ output "vpc_cidr_block" {
   value       = module.networking.vpc_cidr_block
 }
 
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = module.networking.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = module.networking.private_subnet_ids
-}
-
 # Load Balancer Outputs
 output "alb_arn" {
   description = "ARN of the Application Load Balancer"
