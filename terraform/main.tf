@@ -77,7 +77,7 @@ module "rds" {
   backup_retention_period = var.db_backup_retention_period
   backup_window          = var.db_backup_window
   maintenance_window     = var.db_maintenance_window
-  private_subnet_ids     = module.networking.private_subnet_ids
+  private_subnet_ids     = var.private_subnet_ids
   security_group_id      = module.networking.rds_security_group_id
 }
 
