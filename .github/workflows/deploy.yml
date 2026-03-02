@@ -421,15 +421,13 @@ jobs:
             terraform plan \
               -destroy \
               -var-file="$TF_VAR_file" \
-              -out="tfplan-destroy-$ENVIRONMENT" \
-              -detailed-exitcode
+              -out="tfplan-destroy-$ENVIRONMENT"
             PLAN_EXITCODE=$?
           else
             echo "🏗️ Planning infrastructure APPLY for $ENVIRONMENT environment"
             terraform plan \
               -var-file="$TF_VAR_file" \
-              -out="tfplan-apply-$ENVIRONMENT" \
-              -detailed-exitcode
+              -out="tfplan-apply-$ENVIRONMENT"
             PLAN_EXITCODE=$?
           fi
           
