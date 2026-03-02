@@ -128,8 +128,8 @@ jobs:
           fi
           
           # Early validation for required Terraform files
-          if [ ! -f "terraform/environments/${{ env.ENVIRONMENT }}.tfvars" ]; then
-            echo "❌ Missing Terraform variables file: terraform/environments/${{ env.ENVIRONMENT }}.tfvars"
+          if [ ! -f "terraform/envs/${{ env.ENVIRONMENT }}/terraform.tfvars" ]; then
+            echo "❌ Missing Terraform variables file: terraform/envs/${{ env.ENVIRONMENT }}/terraform.tfvars"
             exit 1
           fi
           
