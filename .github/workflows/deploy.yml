@@ -377,284 +377,44 @@ jobs:
           terraform_version: ~1.0
           terraform_wrapper: false
 
-      - name: Terraform Initialization and Planning
-        id: init-and-plan
-        working-directory: ./terraform
-        env:
-          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
+      - name: Read destroy configuration
+        id: read-destroy-config
         run: |
-          echo "🔧 Initializing Terraform for $ENVIRONMENT environment..."
-          
-          # Initialize Terraform with environment-specific backend configuration
+          DESTROY="$(jq -r '.${{ inputs.environment }}' ./terraform/destroy_config.json)"
+          echo "destroy=$(echo $DESTROY)" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: |
           terraform init \
             -backend-config="backend-config/${ENVIRONMENT}.hcl" \
             -reconfigure
-          
-          echo "✅ Terraform initialized successfully"
-          
-          # Select or create workspace based on environment
-          echo "🔧 Configuring Terraform workspace..."
-          if terraform workspace list | grep -q "$ENVIRONMENT"; then
-            terraform workspace select "$ENVIRONMENT"
-            echo "✅ Selected existing workspace: $ENVIRONMENT"
-          else
-            terraform workspace new "$ENVIRONMENT"
-            echo "✅ Created new workspace: $ENVIRONMENT"
-          fi
-          
-          echo "🔧 Validating Terraform configuration..."
-          terraform validate
-          echo "✅ Terraform configuration is valid"
 
-      - name: Generate Terraform Plan
-        id: plan
-        working-directory: ./terraform
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Destroy
+        if: steps.read-destroy-config.outputs.destroy == 'true'
+        id: terraform-destroy
         env:
           ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-          TF_VAR_file: "environments/${{ needs.setup.outputs.environment }}.tfvars"
-        run: |
-          echo "📋 Generating Terraform execution plan for $ENVIRONMENT environment..."
-          
-          # Generate plan based on configuration
-          if [ "${{ env.DESTROY_INFRASTRUCTURE }}" = "true" ]; then
-            echo "🔥 Planning infrastructure DESTROY for $ENVIRONMENT environment"
-            terraform plan \
-              -destroy \
-              -var-file="$TF_VAR_file" \
-              -out="tfplan-destroy-$ENVIRONMENT"
-            PLAN_EXITCODE=$?
-          else
-            echo "🏗️ Planning infrastructure APPLY for $ENVIRONMENT environment"
-            terraform plan \
-              -var-file="$TF_VAR_file" \
-              -out="tfplan-apply-$ENVIRONMENT"
-            PLAN_EXITCODE=$?
-          fi
-          
-          echo "exitcode=$PLAN_EXITCODE" >> $GITHUB_OUTPUT
-          
-          # Interpret plan exit codes
-          case $PLAN_EXITCODE in
-            0)
-              echo "✅ No changes needed - infrastructure is up to date"
-              ;;
-            1)
-              echo "❌ Terraform plan failed"
-              exit 1
-              ;;
-            2)
-              echo "📝 Changes detected - plan generated successfully"
-              ;;
-            *)
-              echo "❌ Unexpected exit code: $PLAN_EXITCODE"
-              exit 1
-              ;;
-          esac
+        run: cd terraform &&
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
+          terraform destroy -var-file="./envs/$ENVIRONMENT/terraform.tfvars" -auto-approve
 
-      - name: Display Terraform Plan
-        working-directory: ./terraform
-        env:
-          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-        run: |
-          echo "📋 Terraform Plan Summary for $ENVIRONMENT environment:"
-          echo "=============================================="
-          
-          if [ "${{ env.DESTROY_INFRASTRUCTURE }}" = "true" ]; then
-            if [ -f "tfplan-destroy-$ENVIRONMENT" ]; then
-              terraform show "tfplan-destroy-$ENVIRONMENT"
-            else
-              echo "No destroy plan file found"
-            fi
-          else
-            if [ -f "tfplan-apply-$ENVIRONMENT" ]; then
-              terraform show "tfplan-apply-$ENVIRONMENT"
-            else
-              echo "No apply plan file found"
-            fi
-          fi
+      - name: Terraform Plan
+        if: steps.read-destroy-config.outputs.destroy != 'true'
+        id: terraform-plan
+        run: cd terraform &&
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
+          terraform plan -var-file="./envs/$ENVIRONMENT/terraform.tfvars" -out="$ENVIRONMENT.plan"
 
-      - name: Apply or Destroy Infrastructure
-        id: apply-or-destroy
-        working-directory: ./terraform
-        env:
-          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-        run: |
-          # Only proceed if there are changes to apply (exit code 2) or if forced
-          if [ "${{ steps.plan.outputs.exitcode }}" = "0" ]; then
-            echo "✅ No changes needed - skipping apply/destroy"
-            echo "status=no-changes" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          if [ "${{ steps.plan.outputs.exitcode }}" != "2" ]; then
-            echo "❌ Cannot proceed - plan failed or returned unexpected exit code"
-            echo "status=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          # Function to retry terraform operations with exponential backoff
-          retry_terraform() {
-            local cmd="$1"
-            local max_attempts=3
-            local attempt=1
-            local delay=5
-            
-            while [ $attempt -le $max_attempts ]; do
-              echo "Attempt $attempt of $max_attempts: $cmd"
-              
-              if eval "$cmd"; then
-                echo "✅ Command succeeded on attempt $attempt"
-                return 0
-              else
-                local exit_code=$?
-                echo "❌ Command failed on attempt $attempt (exit code: $exit_code)"
-                
-                if [ $attempt -eq $max_attempts ]; then
-                  echo "❌ All retry attempts exhausted"
-                  return $exit_code
-                fi
-                
-                echo "⏳ Waiting ${delay}s before retry..."
-                sleep $delay
-                delay=$((delay * 2))  # Exponential backoff
-                attempt=$((attempt + 1))
-              fi
-            done
-          }
-          
-          # Apply or destroy based on configuration
-          if [ "${{ env.DESTROY_INFRASTRUCTURE }}" = "true" ]; then
-            echo "🔥 Destroying infrastructure for $ENVIRONMENT environment..."
-            
-            # Safety check for PROD environment
-            if [ "$ENVIRONMENT" = "prod" ]; then
-              echo "⚠️ PRODUCTION ENVIRONMENT DESTROY REQUESTED"
-              echo "This will destroy all production infrastructure!"
-              echo "Resources to be destroyed:"
-              terraform show "tfplan-destroy-$ENVIRONMENT" | grep -E "# .* will be destroyed" || true
-              echo "Proceeding with destroy operation in 10 seconds..."
-              sleep 10
-            fi
-            
-            # Retry terraform destroy with exponential backoff
-            if retry_terraform "terraform apply tfplan-destroy-$ENVIRONMENT"; then
-              echo "✅ Infrastructure destroyed successfully"
-              echo "status=destroyed" >> $GITHUB_OUTPUT
-              
-              # Verify destruction by checking if resources still exist
-              echo "🔍 Verifying infrastructure destruction..."
-              if terraform show | grep -q "No state"; then
-                echo "✅ Infrastructure destruction verified - no resources remain"
-              else
-                echo "⚠️ Some resources may still exist - check manually"
-              fi
-              
-            else
-              echo "❌ Infrastructure destroy failed after all retry attempts"
-              echo "status=destroy-failed" >> $GITHUB_OUTPUT
-              
-              # Provide troubleshooting information
-              echo "🔍 Troubleshooting Information:"
-              echo "- Check AWS console for resources that may be preventing deletion"
-              echo "- Verify IAM permissions for destroy operations"
-              echo "- Check for dependencies between resources"
-              echo "- Consider manual cleanup if automated destroy continues to fail"
-              
-              exit 1
-            fi
-            
-          else
-            echo "🏗️ Applying infrastructure changes for $ENVIRONMENT environment..."
-            
-            # Show what will be created/modified
-            echo "📋 Resources to be applied:"
-            terraform show "tfplan-apply-$ENVIRONMENT" | grep -E "# .* will be (created|updated)" || true
-            
-            # Retry terraform apply with exponential backoff
-            if retry_terraform "terraform apply tfplan-apply-$ENVIRONMENT"; then
-              echo "✅ Infrastructure applied successfully"
-              echo "status=applied" >> $GITHUB_OUTPUT
-              
-              # Display important outputs
-              echo "📋 Infrastructure Outputs:"
-              echo "=========================="
-              terraform output
-              
-              # Verify critical resources are healthy
-              echo "🔍 Verifying infrastructure health..."
-              
-              # Check if ECS cluster is active
-              if terraform output -raw ecs_cluster_arn >/dev/null 2>&1; then
-                CLUSTER_ARN=$(terraform output -raw ecs_cluster_arn)
-                echo "✅ ECS Cluster created: $CLUSTER_ARN"
-              fi
-              
-              # Check if RDS instance is available
-              if terraform output -raw rds_endpoint >/dev/null 2>&1; then
-                RDS_ENDPOINT=$(terraform output -raw rds_endpoint)
-                echo "✅ RDS Instance available: $RDS_ENDPOINT"
-              fi
-              
-              # Check if ALB is active
-              if terraform output -raw alb_dns_name >/dev/null 2>&1; then
-                ALB_DNS=$(terraform output -raw alb_dns_name)
-                echo "✅ Application Load Balancer: $ALB_DNS"
-              fi
-              
-            else
-              echo "❌ Infrastructure apply failed after all retry attempts"
-              echo "status=apply-failed" >> $GITHUB_OUTPUT
-              
-              # Provide troubleshooting information
-              echo "🔍 Troubleshooting Information:"
-              echo "- Check AWS service limits and quotas"
-              echo "- Verify IAM permissions for resource creation"
-              echo "- Check for resource naming conflicts"
-              echo "- Review Terraform state for partial deployments"
-              echo "- Consider running 'terraform refresh' to sync state"
-              
-              exit 1
-            fi
-          fi
-
-      - name: Infrastructure Status Summary
-        if: always()
-        env:
-          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-          PLAN_EXITCODE: ${{ steps.plan.outputs.exitcode }}
-          INFRA_STATUS: ${{ steps.apply-or-destroy.outputs.status }}
-        run: |
-          echo "📊 Infrastructure Management Summary"
-          echo "===================================="
-          echo "Environment: $ENVIRONMENT"
-          echo "Terraform Action: ${{ env.TERRAFORM_ACTION }}"
-          echo "Destroy Mode: ${{ env.DESTROY_INFRASTRUCTURE }}"
-          echo "Plan Exit Code: $PLAN_EXITCODE"
-          echo "Infrastructure Status: $INFRA_STATUS"
-          
-          case "$INFRA_STATUS" in
-            "applied")
-              echo "✅ Infrastructure successfully applied"
-              ;;
-            "destroyed")
-              echo "✅ Infrastructure successfully destroyed"
-              ;;
-            "no-changes")
-              echo "✅ No infrastructure changes needed"
-              ;;
-            "apply-failed")
-              echo "❌ Infrastructure apply failed"
-              ;;
-            "destroy-failed")
-              echo "❌ Infrastructure destroy failed"
-              ;;
-            "failed")
-              echo "❌ Infrastructure operation failed"
-              ;;
-            *)
-              echo "❓ Unknown infrastructure status: $INFRA_STATUS"
-              ;;
-          esac
+      - name: Terraform Apply
+        if: steps.read-destroy-config.outputs.destroy != 'true'
+        id: terraform-apply
+        run: cd terraform &&
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
+          terraform apply "$ENVIRONMENT.plan"
 
   # Deployment placeholder
   deploy:
