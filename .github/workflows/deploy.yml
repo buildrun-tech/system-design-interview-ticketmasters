@@ -380,8 +380,8 @@ jobs:
       - name: Read destroy configuration
         id: read-destroy-config
         run: |
-          DESTROY="$(jq -r '.${ENVIRONMENT}' ./terraform/destroy_config.json)"
-          echo "destroy=$(echo $DESTROY)" >> $GITHUB_OUTPUT
+          DESTROY="$(jq -r --arg env "$ENVIRONMENT" '.[$env]' ./terraform/destroy_config.json)"
+          echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
 
       - name: Terraform Init
         working-directory: ./terraform
