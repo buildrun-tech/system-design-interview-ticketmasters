@@ -5,10 +5,6 @@ on:
     branches:
       - develop    # DEV environment
       - main       # PROD environment
-  pull_request:
-    branches:
-      - develop
-      - main
 
 env:
   # Environment detection based on branch
