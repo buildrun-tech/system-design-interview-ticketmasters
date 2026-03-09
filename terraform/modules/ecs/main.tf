@@ -1,42 +1,40 @@
 # ECS Module - Container Orchestration
 
-# Application Load Balancer
+# Network Load Balancer
 resource "aws_lb" "main" {
-  name               = var.alb_name
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [var.alb_security_group_id]
-  subnets            = var.public_subnet_ids
-
-  enable_deletion_protection = false
+  name                             = "${var.name_prefix}-nlb"
+  internal                         = true
+  load_balancer_type               = "network"
+  security_groups                  = [var.nlb_security_group_id]
+  subnets                          = var.private_subnet_ids
+  enable_cross_zone_load_balancing = true
+  enable_deletion_protection       = false
 
   tags = merge(var.common_tags, {
-    Name = var.alb_name
+    Name = "${var.name_prefix}-nlb"
   })
 }
 
-# ALB Target Group
-resource "aws_lb_target_group" "app" {
-  name        = "${var.name_prefix}-tg"
-  port        = var.container_port
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "ip"
+# NLB Target Group
+resource "aws_lb_target_group" "main" {
+  name                 = "${var.name_prefix}-nlb-tg"
+  port                 = var.container_port
+  protocol             = "TCP"
+  vpc_id               = var.vpc_id
+  target_type          = "ip"
+  deregistration_delay = 30
 
   health_check {
     enabled             = true
-    healthy_threshold   = var.health_check_healthy_threshold
-    interval            = var.health_check_interval
-    matcher             = "200"
-    path                = var.health_check_path
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 30
     port                = "traffic-port"
-    protocol            = "HTTP"
-    timeout             = var.health_check_timeout
-    unhealthy_threshold = var.health_check_unhealthy_threshold
+    protocol            = "TCP"
   }
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-tg"
+    Name = "${var.name_prefix}-nlb-tg"
   })
 
   lifecycle {
@@ -44,18 +42,27 @@ resource "aws_lb_target_group" "app" {
   }
 }
 
-# ALB Listener
-resource "aws_lb_listener" "app" {
+# NLB Listener
+resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = 8080
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = aws_lb_target_group.main.arn
   }
+}
 
-  tags = var.common_tags
+# VPC Link for API Gateway
+resource "aws_api_gateway_vpc_link" "main" {
+  name        = "${var.name_prefix}-vpc-link"
+  description = "VPC Link for API Gateway to access internal NLB"
+  target_arns = [aws_lb.main.arn]
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-vpc-link"
+  })
 }
 
 # CloudWatch Log Group for ECS
@@ -303,12 +310,12 @@ resource "aws_ecs_service" "app" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
+    target_group_arn = aws_lb_target_group.main.arn
     container_name   = "ticketmaster-app"
     container_port   = var.container_port
   }
 
-  depends_on = [aws_lb_listener.app]
+  depends_on = [aws_lb_listener.main]
 
   tags = merge(var.common_tags, {
     Name = var.service_name

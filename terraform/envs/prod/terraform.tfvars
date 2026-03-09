@@ -7,10 +7,7 @@ aws_region  = "us-east-1"
 # Networking Configuration (using existing VPC)
 # Replace these with your actual VPC and subnet IDs
 vpc_id = "vpc-xxxxxxxxx"  # Replace with your VPC ID
-public_subnet_ids = [
-  "subnet-xxxxxxxxx",     # Replace with your public subnet IDs
-  "subnet-yyyyyyyyy"
-]
+
 private_subnet_ids = [
   "subnet-zzzzzzzzz",     # Replace with your private subnet IDs
   "subnet-aaaaaaaaa"
@@ -41,14 +38,6 @@ db_max_allocated_storage    = 200
 db_backup_retention_period  = 14
 db_backup_window           = "03:00-04:00"
 db_maintenance_window      = "sun:04:00-sun:05:00"
-
-# Load Balancer Configuration
-alb_name                         = "ticketmaster-prod-alb"
-health_check_path                = "/q/health"
-health_check_interval            = 30
-health_check_timeout             = 5
-health_check_healthy_threshold   = 3
-health_check_unhealthy_threshold = 2
 
 # Security Configuration (more restrictive for prod)
 # Note: In real production, this should be restricted to specific CIDR blocks

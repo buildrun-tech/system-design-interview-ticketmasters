@@ -10,9 +10,9 @@ output "vpc_cidr_block" {
   value       = data.aws_vpc.existing.cidr_block
 }
 
-output "alb_security_group_id" {
-  description = "ID of the ALB security group"
-  value       = aws_security_group.alb.id
+output "nlb_security_group_id" {
+  description = "Security group ID for NLB"
+  value       = aws_security_group.nlb.id
 }
 
 output "ecs_security_group_id" {

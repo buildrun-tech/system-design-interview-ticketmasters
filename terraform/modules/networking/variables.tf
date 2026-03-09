@@ -17,8 +17,9 @@ variable "vpc_id" {
 }
 
 variable "allowed_cidr_blocks" {
-  description = "CIDR blocks allowed to access the load balancer"
+  description = "CIDR blocks allowed to access the load balancer (deprecated - NLB uses VPC CIDR)"
   type        = list(string)
+  default     = []
 }
 
 variable "container_port" {

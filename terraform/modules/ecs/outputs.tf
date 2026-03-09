@@ -35,29 +35,29 @@ output "task_role_arn" {
   value       = aws_iam_role.ecs_task_role.arn
 }
 
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
+output "nlb_arn" {
+  description = "ARN of the Network Load Balancer"
   value       = aws_lb.main.arn
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
+output "nlb_dns_name" {
+  description = "DNS name of the Network Load Balancer"
   value       = aws_lb.main.dns_name
 }
 
-output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
+output "nlb_zone_id" {
+  description = "Zone ID of the Network Load Balancer"
   value       = aws_lb.main.zone_id
 }
 
-output "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
-  value       = aws_lb_target_group.app.arn
+output "vpc_link_id" {
+  description = "ID of the VPC Link for API Gateway"
+  value       = aws_api_gateway_vpc_link.main.id
 }
 
-output "application_url" {
-  description = "URL to access the application"
-  value       = "http://${aws_lb.main.dns_name}"
+output "vpc_link_arn" {
+  description = "ARN of the VPC Link for API Gateway"
+  value       = aws_api_gateway_vpc_link.main.arn
 }
 
 output "cloudwatch_log_group_name" {

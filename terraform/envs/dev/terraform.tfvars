@@ -7,14 +7,9 @@ aws_region  = "us-east-2"
 # Networking Configuration (using existing VPC)
 # Replace these with your actual VPC and subnet IDs
 vpc_id = "vpc-088d5d306dd51edda"  # Replace with your VPC ID
-public_subnet_ids = [
-  "subnet-0b86a3228eb03fee8",     # Replace with your public subnet IDs
-  "subnet-0bbaa0ae622a7bed5",
-  "subnet-05da6cbe10402cec9"
-]
 
 private_subnet_ids = [
-  "subnet-0b86a3228eb03fee8",     # Replace with your public subnet IDs
+  "subnet-0b86a3228eb03fee8",     # Replace with your private subnet IDs
   "subnet-0bbaa0ae622a7bed5",
   "subnet-05da6cbe10402cec9"
 ]
@@ -43,14 +38,6 @@ db_max_allocated_storage    = 50
 db_backup_retention_period  = 3
 db_backup_window           = "03:00-04:00"
 db_maintenance_window      = "sun:04:00-sun:05:00"
-
-# Load Balancer Configuration
-alb_name                         = "ticketmaster-dev-alb"
-health_check_path                = "/q/health"
-health_check_interval            = 30
-health_check_timeout             = 5
-health_check_healthy_threshold   = 2
-health_check_unhealthy_threshold = 3
 
 # Security Configuration (more permissive for dev)
 allowed_cidr_blocks = ["0.0.0.0/0"]

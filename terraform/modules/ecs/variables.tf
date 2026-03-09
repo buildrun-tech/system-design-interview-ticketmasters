@@ -27,18 +27,13 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "List of public subnet IDs for ALB"
-  type        = list(string)
-}
-
 variable "private_subnet_ids" {
-  description = "List of private subnet IDs for ECS tasks"
+  description = "List of private subnet IDs for NLB and ECS tasks"
   type        = list(string)
 }
 
-variable "alb_security_group_id" {
-  description = "Security group ID for ALB"
+variable "nlb_security_group_id" {
+  description = "Security group ID for NLB"
   type        = string
 }
 
@@ -105,36 +100,7 @@ variable "db_password_secret_arn" {
   type        = string
 }
 
-# Load Balancer Configuration
-variable "alb_name" {
-  description = "Name of the Application Load Balancer"
-  type        = string
-}
-
-variable "health_check_path" {
-  description = "Health check path for ALB target group"
-  type        = string
-}
-
-variable "health_check_interval" {
-  description = "Health check interval in seconds"
-  type        = number
-}
-
-variable "health_check_timeout" {
-  description = "Health check timeout in seconds"
-  type        = number
-}
-
-variable "health_check_healthy_threshold" {
-  description = "Number of consecutive successful health checks"
-  type        = number
-}
-
-variable "health_check_unhealthy_threshold" {
-  description = "Number of consecutive failed health checks"
-  type        = number
-}
+# Load Balancer Configuration - removed ALB-specific variables for NLB
 
 # Monitoring and Logging
 variable "enable_container_insights" {
