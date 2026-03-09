@@ -80,35 +80,36 @@ output "vpc_cidr_block" {
 }
 
 # Load Balancer Outputs
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
-  value       = module.ecs.alb_arn
+output "nlb_arn" {
+  description = "ARN of the Network Load Balancer"
+  value       = module.ecs.nlb_arn
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = module.ecs.alb_dns_name
+output "nlb_dns_name" {
+  description = "DNS name of the Network Load Balancer"
+  value       = module.ecs.nlb_dns_name
 }
 
-output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
-  value       = module.ecs.alb_zone_id
+output "nlb_zone_id" {
+  description = "Zone ID of the Network Load Balancer"
+  value       = module.ecs.nlb_zone_id
 }
 
-output "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
-  value       = module.ecs.alb_target_group_arn
+# VPC Link Outputs
+output "vpc_link_id" {
+  description = "ID of the VPC Link for API Gateway"
+  value       = module.ecs.vpc_link_id
 }
 
-output "application_url" {
-  description = "URL to access the application"
-  value       = module.ecs.application_url
+output "vpc_link_arn" {
+  description = "ARN of the VPC Link for API Gateway"
+  value       = module.ecs.vpc_link_arn
 }
 
 # Security Group Outputs
-output "alb_security_group_id" {
-  description = "ID of the ALB security group"
-  value       = module.networking.alb_security_group_id
+output "nlb_security_group_id" {
+  description = "ID of the NLB security group"
+  value       = module.networking.nlb_security_group_id
 }
 
 output "ecs_security_group_id" {

@@ -131,51 +131,9 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "List of existing public subnet IDs"
-  type        = list(string)
-}
-
 variable "private_subnet_ids" {
-  description = "List of existing private subnet IDs"
+  description = "List of existing private subnet IDs for NLB and ECS tasks"
   type        = list(string)
-}
-
-# Load Balancer Configuration
-variable "alb_name" {
-  description = "Name of the Application Load Balancer"
-  type        = string
-  default     = null # Will use local.name_prefix if not provided
-}
-
-variable "health_check_path" {
-  description = "Health check path for ALB target group"
-  type        = string
-  default     = "/q/health"
-}
-
-variable "health_check_interval" {
-  description = "Health check interval in seconds"
-  type        = number
-  default     = 30
-}
-
-variable "health_check_timeout" {
-  description = "Health check timeout in seconds"
-  type        = number
-  default     = 5
-}
-
-variable "health_check_healthy_threshold" {
-  description = "Number of consecutive successful health checks"
-  type        = number
-  default     = 2
-}
-
-variable "health_check_unhealthy_threshold" {
-  description = "Number of consecutive failed health checks"
-  type        = number
-  default     = 3
 }
 
 # Security Configuration

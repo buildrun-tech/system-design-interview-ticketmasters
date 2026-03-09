@@ -85,33 +85,26 @@ module "rds" {
 module "ecs" {
   source = "./modules/ecs"
 
-  name_prefix                      = local.name_prefix
-  common_tags                     = local.common_tags
-  environment                     = var.environment
-  aws_region                      = var.aws_region
-  vpc_id                          = var.vpc_id
-  public_subnet_ids               = var.public_subnet_ids
-  private_subnet_ids              = var.private_subnet_ids
-  alb_security_group_id           = module.networking.alb_security_group_id
-  ecs_security_group_id           = module.networking.ecs_security_group_id
-  cluster_name                    = var.ecs_cluster_name != null ? var.ecs_cluster_name : "${local.name_prefix}-cluster"
-  service_name                    = var.ecs_service_name
-  task_cpu                        = var.ecs_task_cpu
-  task_memory                     = var.ecs_task_memory
-  desired_count                   = var.ecs_desired_count
-  container_port                  = var.container_port
-  ecr_repository_url              = var.ecr_repository_url
-  db_endpoint                     = module.rds.endpoint
-  db_name                         = var.db_name
-  db_username                     = var.db_username
-  db_password_secret_arn          = module.rds.password_secret_arn
-  alb_name                        = var.alb_name != null ? var.alb_name : "${local.name_prefix}-alb"
-  health_check_path               = var.health_check_path
-  health_check_interval           = var.health_check_interval
-  health_check_timeout            = var.health_check_timeout
-  health_check_healthy_threshold  = var.health_check_healthy_threshold
-  health_check_unhealthy_threshold = var.health_check_unhealthy_threshold
-  enable_container_insights       = var.enable_container_insights
-  log_retention_days              = var.log_retention_days
-  use_fargate_spot               = var.use_fargate_spot
+  name_prefix            = local.name_prefix
+  common_tags            = local.common_tags
+  environment            = var.environment
+  aws_region             = var.aws_region
+  vpc_id                 = var.vpc_id
+  private_subnet_ids     = var.private_subnet_ids
+  nlb_security_group_id  = module.networking.nlb_security_group_id
+  ecs_security_group_id  = module.networking.ecs_security_group_id
+  cluster_name           = var.ecs_cluster_name != null ? var.ecs_cluster_name : "${local.name_prefix}-cluster"
+  service_name           = var.ecs_service_name
+  task_cpu               = var.ecs_task_cpu
+  task_memory            = var.ecs_task_memory
+  desired_count          = var.ecs_desired_count
+  container_port         = var.container_port
+  ecr_repository_url     = var.ecr_repository_url
+  db_endpoint            = module.rds.endpoint
+  db_name                = var.db_name
+  db_username            = var.db_username
+  db_password_secret_arn = module.rds.password_secret_arn
+  enable_container_insights = var.enable_container_insights
+  log_retention_days     = var.log_retention_days
+  use_fargate_spot       = var.use_fargate_spot
 }

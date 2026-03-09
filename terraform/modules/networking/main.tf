@@ -5,25 +5,17 @@ data "aws_vpc" "existing" {
   id = var.vpc_id
 }
 
-# Security Group for Application Load Balancer
-resource "aws_security_group" "alb" {
-  name_prefix = "${var.name_prefix}-alb-"
+# Security Group for Network Load Balancer
+resource "aws_security_group" "nlb" {
+  name_prefix = "${var.name_prefix}-nlb-"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    description = "Traffic from VPC"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
-  }
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
+    cidr_blocks = [data.aws_vpc.existing.cidr_block]
   }
 
   egress {
@@ -35,7 +27,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-alb-sg"
+    Name = "${var.name_prefix}-nlb-sg"
   })
 
   lifecycle {
@@ -49,11 +41,11 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "HTTP from ALB"
+    description     = "HTTP from NLB"
     from_port       = var.container_port
     to_port         = var.container_port
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    security_groups = [aws_security_group.nlb.id]
   }
 
   egress {
