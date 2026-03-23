@@ -28,8 +28,14 @@ variable "vpc_id" {
 }
 
 variable "private_subnet_ids" {
-  description = "List of private subnet IDs for NLB and ECS tasks"
+  description = "List of subnet IDs for NLB and ECS tasks"
   type        = list(string)
+}
+
+variable "assign_public_ip" {
+  description = "Whether ECS task ENIs should receive public IP addresses"
+  type        = bool
+  default     = true
 }
 
 variable "nlb_security_group_id" {
