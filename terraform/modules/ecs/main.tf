@@ -234,7 +234,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name  = "ticketmaster-app"
-      image = "${var.ecr_repository_url}:latest"
+      image = "${var.ecr_repository_url}:latest-dev"
       
       portMappings = [
         {
