@@ -1,7 +1,7 @@
 # Development Environment Configuration
 
 # Core Configuration
-environment = "dev"
+environment = "staging"
 aws_region  = "us-east-2"
 
 # Networking Configuration (using existing VPC)
