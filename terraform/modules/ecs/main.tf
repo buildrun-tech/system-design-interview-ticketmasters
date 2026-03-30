@@ -322,8 +322,4 @@ resource "aws_ecs_service" "app" {
   tags = merge(var.common_tags, {
     Name = var.service_name
   })
-
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
 }

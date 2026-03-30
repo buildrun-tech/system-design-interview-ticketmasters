@@ -48,16 +48,24 @@ The system SHALL configure the ECS service to automatically register and deregis
 - **WHEN** ECS stops a task
 - **THEN** task IP is automatically removed from NLB target group
 
-### Requirement: Health checks use TCP protocol
-The system SHALL configure target group health checks using TCP protocol on the traffic port to validate target availability.
+### Requirement: Health checks use HTTP readiness probing
+The system SHALL configure target group health checks using HTTP on the traffic port and probe `/q/health/ready` to validate target readiness.
 
-#### Scenario: Health check protocol is TCP
+#### Scenario: Health check protocol is HTTP
 - **WHEN** target group health check is configured
-- **THEN** health check protocol is "TCP"
+- **THEN** health check protocol is "HTTP"
 
 #### Scenario: Health check uses traffic port
 - **WHEN** target group health check is configured
 - **THEN** health check port is "traffic-port" (8080)
+
+#### Scenario: Health check path targets readiness endpoint
+- **WHEN** target group health check is configured
+- **THEN** health check path is `/q/health/ready`
+
+#### Scenario: Health check matcher expects HTTP 200
+- **WHEN** target group health check is configured
+- **THEN** health check matcher is `200`
 
 #### Scenario: Health check thresholds are configured
 - **WHEN** target group health check is configured
