@@ -30,7 +30,9 @@ resource "aws_lb_target_group" "main" {
     unhealthy_threshold = 3
     interval            = 30
     port                = "traffic-port"
-    protocol            = "TCP"
+    protocol            = "HTTP"
+    path                = "/q/health/ready"
+    matcher             = "200"
   }
 
   tags = merge(var.common_tags, {
