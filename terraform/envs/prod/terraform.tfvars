@@ -1,7 +1,7 @@
 # Production Environment Configuration
 
 # Core Configuration
-environment = "prod"
+environment = "production"
 aws_region  = "us-east-1"
 
 # Networking Configuration (using existing VPC)
