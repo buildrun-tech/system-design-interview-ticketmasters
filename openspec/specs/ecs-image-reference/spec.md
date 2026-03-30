@@ -1,5 +1,8 @@
-## ADDED Requirements
+# ecs-image-reference Specification
 
+## Purpose
+TBD - created by archiving change fix-private-ecr-image-pull. Update Purpose after archive.
+## Requirements
 ### Requirement: ECS task definition image tag is configurable
 The system SHALL allow the ECS task definition to use a configured image tag instead of hardcoding `latest`.
 
@@ -32,3 +35,4 @@ The system SHALL verify that the selected ECR repository and image tag exist bef
 #### Scenario: Deployment proceeds when tag exists
 - **WHEN** the deployment workflow confirms the configured image tag exists in ECR
 - **THEN** the workflow continues to the ECS deployment step
+
