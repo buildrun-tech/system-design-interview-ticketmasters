@@ -143,6 +143,17 @@ output "cloudwatch_log_group_arn" {
   value       = module.ecs.cloudwatch_log_group_arn
 }
 
+# SQS Outputs
+output "check_booking_pending_state_queue_url" {
+  description = "URL of the check-booking-pending-state SQS queue"
+  value       = module.sqs_check_booking_pending_state.queue_url
+}
+
+output "check_booking_pending_state_queue_arn" {
+  description = "ARN of the check-booking-pending-state SQS queue"
+  value       = module.sqs_check_booking_pending_state.queue_arn
+}
+
 # Environment Information
 output "environment" {
   description = "Environment name"

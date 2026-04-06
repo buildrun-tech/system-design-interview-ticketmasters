@@ -81,6 +81,15 @@ module "rds" {
   security_group_id      = module.networking.rds_security_group_id
 }
 
+# SQS Module - check-booking-pending-state queue
+module "sqs_check_booking_pending_state" {
+  source = "./modules/sqs"
+
+  queue_name  = "${var.environment}-check-booking-pending-state"
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+}
+
 # ECS Module
 module "ecs" {
   source = "./modules/ecs"

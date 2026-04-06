@@ -257,6 +257,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "QUARKUS_DATASOURCE_USERNAME"
           value = var.db_username
+        },
+        {
+          name  = "SQS_CHECK_BOOKING_PENDING_STATE_QUEUE_NAME",
+          value = "${var.environment}-check-booking-pending-state"
         }
       ]
 
