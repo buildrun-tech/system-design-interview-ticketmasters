@@ -406,23 +406,6 @@ jobs:
           echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "Selected image tag: $IMAGE_TAG"
 
-      - name: Validate image exists in ECR
-        if: steps.read-destroy-config.outputs.destroy != 'true'
-        env:
-          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
-        run: |
-          if [ "$ENVIRONMENT" = "prod" ]; then
-            ECR_REPO="${{ vars.ECR_REPOSITORY_PROD || 'ticketmaster-prod' }}"
-          else
-            ECR_REPO="${{ vars.ECR_REPOSITORY_DEV || 'ticketmaster-dev' }}"
-          fi
-          echo "🔍 Validating image $ECR_REPO:$IMAGE_TAG exists in ECR..."
-          if ! aws ecr describe-images --repository-name "$ECR_REPO" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
-            echo "❌ Image not found in ECR: $ECR_REPO:$IMAGE_TAG"
-            exit 1
-          fi
-          echo "✅ Image validated: $ECR_REPO:$IMAGE_TAG"
-
       - name: Terraform Init
         working-directory: ./terraform
         run: |
