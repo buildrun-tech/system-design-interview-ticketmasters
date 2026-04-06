@@ -1,5 +1,8 @@
-## ADDED Requirements
+# terraform-managed-ecs-rollout Specification
 
+## Purpose
+TBD - created by archiving change reorder-cicd-terraform-ecs-flow. Update Purpose after archive.
+## Requirements
 ### Requirement: Dev deployments complete image publication before Terraform apply
 The system SHALL complete application build/test and publish the dev image to ECR before Terraform starts a dev deployment that can update ECS.
 
@@ -43,3 +46,4 @@ The system SHALL verify after Terraform apply that ECS references the expected t
 #### Scenario: Rollout verification fails
 - **WHEN** the ECS service does not match the expected task definition after Terraform apply
 - **THEN** the workflow fails with a rollout synchronization error
+
