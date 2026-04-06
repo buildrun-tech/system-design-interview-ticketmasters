@@ -351,11 +351,18 @@ jobs:
   infrastructure:
     name: Manage Infrastructure
     runs-on: ubuntu-latest
-    needs: [setup]
-    if: always() && !cancelled() && !failure()
+    needs: [setup, build-and-test, docker-build, image-promotion]
+    if: |
+      always() && !cancelled() &&
+      needs.setup.result == 'success' &&
+      (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped') &&
+      (needs.docker-build.result == 'success' || needs.docker-build.result == 'skipped') &&
+      (needs.image-promotion.result == 'success' || needs.image-promotion.result == 'skipped')
     outputs:
-      terraform-plan-exitcode: ${{ steps.plan.outputs.exitcode }}
-      infrastructure-status: ${{ steps.apply-or-destroy.outputs.status }}
+      infrastructure-status: ${{ steps.set-status.outputs.status }}
+      ecs-cluster-name: ${{ steps.terraform-outputs.outputs.cluster-name }}
+      ecs-service-name: ${{ steps.terraform-outputs.outputs.service-name }}
+      ecs-task-definition-arn: ${{ steps.terraform-outputs.outputs.task-definition-arn }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -379,6 +386,43 @@ jobs:
           DESTROY="$(jq -r --arg env "$ENVIRONMENT" '.[$env]' ./terraform/destroy_config.json)"
           echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
 
+      - name: Determine deployment image tag
+        if: steps.read-destroy-config.outputs.destroy != 'true'
+        id: image-tag
+        run: |
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            IMAGE_TAG="${{ needs.image-promotion.outputs.promoted-image-tag }}"
+            if [ -z "$IMAGE_TAG" ]; then
+              echo "❌ No promoted image tag available for prod deployment"
+              exit 1
+            fi
+          else
+            IMAGE_TAG="${{ needs.docker-build.outputs.image-tag }}"
+            if [ -z "$IMAGE_TAG" ]; then
+              echo "❌ No build image tag available for dev deployment"
+              exit 1
+            fi
+          fi
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Selected image tag: $IMAGE_TAG"
+
+      - name: Validate image exists in ECR
+        if: steps.read-destroy-config.outputs.destroy != 'true'
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            ECR_REPO="${{ vars.ECR_REPOSITORY_PROD || 'ticketmaster-prod' }}"
+          else
+            ECR_REPO="${{ vars.ECR_REPOSITORY_DEV || 'ticketmaster-dev' }}"
+          fi
+          echo "🔍 Validating image $ECR_REPO:$IMAGE_TAG exists in ECR..."
+          if ! aws ecr describe-images --repository-name "$ECR_REPO" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "❌ Image not found in ECR: $ECR_REPO:$IMAGE_TAG"
+            exit 1
+          fi
+          echo "✅ Image validated: $ECR_REPO:$IMAGE_TAG"
+
       - name: Terraform Init
         working-directory: ./terraform
         run: |
@@ -387,57 +431,112 @@ jobs:
             -reconfigure
 
       - name: Terraform Validate
+        working-directory: ./terraform
         run: terraform validate
 
       - name: Terraform Destroy
         if: steps.read-destroy-config.outputs.destroy == 'true'
         id: terraform-destroy
-        env:
-          ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-        run: cd terraform &&
-          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
+        run: |
+          cd terraform
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT
           terraform destroy -var-file="./envs/$ENVIRONMENT/terraform.tfvars" -auto-approve
+          echo "status=destroyed" >> $GITHUB_OUTPUT
 
       - name: Terraform Plan
         if: steps.read-destroy-config.outputs.destroy != 'true'
         id: terraform-plan
-        run: cd terraform &&
-          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
-          terraform plan -var-file="./envs/$ENVIRONMENT/terraform.tfvars" -out="$ENVIRONMENT.plan"
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          cd terraform
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT
+          terraform plan \
+            -var-file="./envs/$ENVIRONMENT/terraform.tfvars" \
+            -var="image_tag=$IMAGE_TAG" \
+            -out="$ENVIRONMENT.plan"
 
       - name: Terraform Apply
         if: steps.read-destroy-config.outputs.destroy != 'true'
         id: terraform-apply
-        run: cd terraform &&
-          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT &&
+        run: |
+          cd terraform
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT
           terraform apply "$ENVIRONMENT.plan"
+          echo "status=applied" >> $GITHUB_OUTPUT
 
-  # Deployment placeholder
+      - name: Capture Terraform outputs
+        if: steps.terraform-apply.outputs.status == 'applied'
+        id: terraform-outputs
+        run: |
+          cd terraform
+          terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT
+          echo "cluster-name=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_OUTPUT
+          echo "service-name=$(terraform output -raw ecs_service_name)" >> $GITHUB_OUTPUT
+          echo "task-definition-arn=$(terraform output -raw ecs_task_definition_arn)" >> $GITHUB_OUTPUT
+
+      - name: Set infrastructure status
+        if: always()
+        id: set-status
+        run: |
+          if [ "${{ steps.terraform-apply.outputs.status }}" = "applied" ]; then
+            echo "status=applied" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.terraform-destroy.outputs.status }}" = "destroyed" ]; then
+            echo "status=destroyed" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.terraform-apply.conclusion }}" = "failure" ]; then
+            echo "status=apply-failed" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.terraform-destroy.conclusion }}" = "failure" ]; then
+            echo "status=destroy-failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+
+  # ECS rollout verification (Terraform apply is the deployment — this stage verifies the outcome)
   deploy:
-    name: Deploy Application
+    name: Verify ECS Rollout
     runs-on: ubuntu-latest
     needs: [setup, infrastructure]
-    if: always() && !cancelled() && !failure() && needs.infrastructure.outputs.infrastructure-status != 'destroy-failed' && needs.infrastructure.outputs.infrastructure-status != 'destroyed'
+    if: |
+      always() && !cancelled() &&
+      needs.setup.result == 'success' &&
+      needs.infrastructure.result == 'success' &&
+      needs.infrastructure.outputs.infrastructure-status == 'applied'
     steps:
-      - name: Deployment Placeholder
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ENVIRONMENT == 'prod' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN_DEV }}
+          role-session-name: GitHubActions-Verify
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify ECS rollout
         env:
           ENVIRONMENT: ${{ needs.setup.outputs.environment }}
-          INFRA_STATUS: ${{ needs.infrastructure.outputs.infrastructure-status }}
+          ECS_CLUSTER: ${{ needs.infrastructure.outputs.ecs-cluster-name }}
+          ECS_SERVICE: ${{ needs.infrastructure.outputs.ecs-service-name }}
+          EXPECTED_TASK_DEF: ${{ needs.infrastructure.outputs.ecs-task-definition-arn }}
         run: |
-          echo "🚀 Deployment to $ENVIRONMENT environment"
-          echo "Infrastructure Status: $INFRA_STATUS"
-          
-          # Only proceed if infrastructure is ready
-          case "$INFRA_STATUS" in
-            "applied"|"no-changes")
-              echo "✅ Infrastructure is ready for deployment"
-              echo "This will be implemented in subsequent tasks"
-              ;;
-            *)
-              echo "⚠️ Infrastructure not ready for deployment: $INFRA_STATUS"
-              echo "Skipping deployment step"
-              ;;
-          esac
+          echo "🔍 Verifying Terraform-managed ECS rollout for $ENVIRONMENT"
+          echo "Cluster:  $ECS_CLUSTER"
+          echo "Service:  $ECS_SERVICE"
+          echo "Expected task definition: $EXPECTED_TASK_DEF"
+
+          CURRENT_TASK_DEF=$(aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          echo "Current task definition: $CURRENT_TASK_DEF"
+
+          if [ "$CURRENT_TASK_DEF" = "$EXPECTED_TASK_DEF" ]; then
+            echo "✅ ECS service is using the expected task definition — Terraform-managed rollout successful"
+          else
+            echo "❌ ECS rollout synchronization error"
+            echo "Expected: $EXPECTED_TASK_DEF"
+            echo "Current:  $CURRENT_TASK_DEF"
+            exit 1
+          fi
 
   # Final status report
   status:
@@ -450,7 +549,6 @@ jobs:
         env:
           ENVIRONMENT: ${{ needs.setup.outputs.environment }}
           INFRA_STATUS: ${{ needs.infrastructure.outputs.infrastructure-status }}
-          TERRAFORM_PLAN_EXITCODE: ${{ needs.infrastructure.outputs.terraform-plan-exitcode }}
         run: |
           echo "📊 Pipeline Execution Summary"
           echo "Environment: $ENVIRONMENT"
@@ -458,7 +556,7 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "Terraform Action: ${{ env.TERRAFORM_ACTION }}"
           echo "Destroy Mode: ${{ env.DESTROY_INFRASTRUCTURE }}"
-          
+
           if [ "$ENVIRONMENT" = "dev" ]; then
             echo ""
             echo "DEV Pipeline Status:"
@@ -471,9 +569,9 @@ jobs:
             echo "- Setup: ${{ needs.setup.result }}"
             echo "- Image Promotion: ${{ needs.image-promotion.result }}"
           fi
-          
-          echo "- Infrastructure: ${{ needs.infrastructure.result }} (Status: $INFRA_STATUS, Plan: $TERRAFORM_PLAN_EXITCODE)"
-          echo "- Deploy: ${{ needs.deploy.result }}"
+
+          echo "- Infrastructure: ${{ needs.infrastructure.result }} (Status: $INFRA_STATUS)"
+          echo "- Verify ECS Rollout: ${{ needs.deploy.result }}"
           
           # Detailed infrastructure status
           echo ""
