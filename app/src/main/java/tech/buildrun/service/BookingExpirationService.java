@@ -22,7 +22,7 @@ public class BookingExpirationService {
     private final ObjectMapper objectMapper;
 
     public BookingExpirationService(SqsClient sqsClient,
-                                    @ConfigProperty(name = "queue.check-booking-pending-state.name") String queueName,
+                                    @ConfigProperty(name = "mp.messaging.incoming.check-booking.queue") String queueName,
                                     ObjectMapper objectMapper) {
         this.sqsClient = sqsClient;
         this.queueUrl = resolveQueueUrl(queueName);
