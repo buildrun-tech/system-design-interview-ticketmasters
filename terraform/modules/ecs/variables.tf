@@ -125,3 +125,10 @@ variable "use_fargate_spot" {
   type        = bool
   default     = false
 }
+
+# Deployment Image
+variable "image_tag" {
+  description = "Image tag for the ECS task definition. When null, falls back to latest-<environment>."
+  type        = string
+  default     = null
+}
