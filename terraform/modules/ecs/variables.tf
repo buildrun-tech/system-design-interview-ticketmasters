@@ -126,6 +126,12 @@ variable "use_fargate_spot" {
   default     = false
 }
 
+# SQS
+variable "sqs_check_booking_queue_url" {
+  description = "URL of the SQS queue for check-booking-pending-state"
+  type        = string
+}
+
 # Deployment Image
 variable "image_tag" {
   description = "Image tag for the ECS task definition. When null, falls back to latest-<environment>."

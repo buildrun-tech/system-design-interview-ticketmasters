@@ -259,8 +259,8 @@ resource "aws_ecs_task_definition" "app" {
           value = var.db_username
         },
         {
-          name  = "SQS_CHECK_BOOKING_PENDING_STATE_QUEUE_NAME",
-          value = "${var.environment}-check-booking-pending-state"
+          name  = "SQS_CHECK_BOOKING_PENDING_STATE_QUEUE_URL",
+          value = var.sqs_check_booking_queue_url
         }
       ]
 

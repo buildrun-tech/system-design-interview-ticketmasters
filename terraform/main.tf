@@ -113,8 +113,9 @@ module "ecs" {
   db_endpoint            = module.rds.endpoint
   db_name                = var.db_name
   db_username            = var.db_username
-  db_password_secret_arn = module.rds.password_secret_arn
-  enable_container_insights = var.enable_container_insights
+  db_password_secret_arn      = module.rds.password_secret_arn
+  sqs_check_booking_queue_url = module.sqs_check_booking_pending_state.queue_url
+  enable_container_insights   = var.enable_container_insights
   log_retention_days     = var.log_retention_days
   use_fargate_spot       = var.use_fargate_spot
 }
