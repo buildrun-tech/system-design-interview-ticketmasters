@@ -15,10 +15,23 @@
         <quarkus.platform.version>3.26.4</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
+
+        <!-- Override Testcontainers version for Docker 29.x compatibility -->
+        <!-- See: https://github.com/testcontainers/testcontainers-java/issues/11422 -->
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- IMPORTANT: Testcontainers BOM must come BEFORE Quarkus BOM -->
+            <!-- Override Testcontainers BOM for Docker 29.x compatibility -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>
