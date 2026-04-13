@@ -22,18 +22,11 @@ public class BookingExpirationService {
     private final ObjectMapper objectMapper;
 
     public BookingExpirationService(SqsClient sqsClient,
-                                    @ConfigProperty(name = "mp.messaging.incoming.check-booking.queue") String queueName,
+                                    @ConfigProperty(name = "mp.messaging.incoming.check-booking.queue.url") String queueUrl,
                                     ObjectMapper objectMapper) {
         this.sqsClient = sqsClient;
-        this.queueUrl = resolveQueueUrl(queueName);
+        this.queueUrl = queueUrl;
         this.objectMapper = objectMapper;
-    }
-
-    private String resolveQueueUrl(String queueName) {
-        return sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
-                .queueName(queueName)
-                .build())
-            .queueUrl();
     }
 
     public void scheduleExpirationCheck(Long bookingId) {
