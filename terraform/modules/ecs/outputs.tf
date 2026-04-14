@@ -60,14 +60,9 @@ output "nlb_zone_id" {
   value       = aws_lb.main.zone_id
 }
 
-output "vpc_link_id" {
-  description = "ID of the VPC Link for API Gateway"
-  value       = aws_api_gateway_vpc_link.main.id
-}
-
-output "vpc_link_arn" {
-  description = "ARN of the VPC Link for API Gateway"
-  value       = aws_api_gateway_vpc_link.main.arn
+output "nlb_listener_arn" {
+  description = "ARN of the NLB listener (used by API Gateway integration)"
+  value       = aws_lb_listener.main.arn
 }
 
 output "cloudwatch_log_group_name" {

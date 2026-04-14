@@ -119,3 +119,15 @@ module "ecs" {
   log_retention_days     = var.log_retention_days
   use_fargate_spot       = var.use_fargate_spot
 }
+
+# API Gateway Module
+module "api_gateway" {
+  source = "./modules/api-gateway"
+
+  name_prefix          = local.name_prefix
+  common_tags          = local.common_tags
+  vpc_id               = var.vpc_id
+  private_subnet_ids   = var.private_subnet_ids
+  apigw_vpc_link_sg_id = module.networking.apigw_vpc_link_sg_id
+  nlb_listener_arn     = module.ecs.nlb_listener_arn
+}

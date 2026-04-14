@@ -105,15 +105,15 @@ output "nlb_zone_id" {
   value       = module.ecs.nlb_zone_id
 }
 
-# VPC Link Outputs
-output "vpc_link_id" {
-  description = "ID of the VPC Link for API Gateway"
-  value       = module.ecs.vpc_link_id
+# API Gateway Outputs
+output "api_gateway_endpoint" {
+  description = "HTTPS invoke URL of the API Gateway HTTP API"
+  value       = module.api_gateway.api_gateway_endpoint
 }
 
-output "vpc_link_arn" {
-  description = "ARN of the VPC Link for API Gateway"
-  value       = module.ecs.vpc_link_arn
+output "vpc_link_id" {
+  description = "ID of the VPC Link v2 for API Gateway"
+  value       = module.api_gateway.vpc_link_id
 }
 
 # Security Group Outputs

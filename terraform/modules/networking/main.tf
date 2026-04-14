@@ -5,17 +5,41 @@ data "aws_vpc" "existing" {
   id = var.vpc_id
 }
 
+# Security Group for API Gateway VPC Link
+# No ingress needed — API Gateway manages ENI injection.
+# Egress is open; the NLB SG enforces inbound restriction.
+resource "aws_security_group" "apigw_vpc_link" {
+  name_prefix = "${var.name_prefix}-apigw-vpc-link-"
+  vpc_id      = var.vpc_id
+
+  egress {
+    description = "All outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-apigw-vpc-link-sg"
+  })
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 # Security Group for Network Load Balancer
 resource "aws_security_group" "nlb" {
   name_prefix = "${var.name_prefix}-nlb-"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "Traffic from VPC"
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.existing.cidr_block]
+    description     = "Traffic from API Gateway VPC Link"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.apigw_vpc_link.id]
   }
 
   egress {
