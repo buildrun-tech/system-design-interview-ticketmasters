@@ -10,6 +10,11 @@ output "vpc_cidr_block" {
   value       = data.aws_vpc.existing.cidr_block
 }
 
+output "apigw_vpc_link_sg_id" {
+  description = "Security group ID for the API Gateway VPC Link"
+  value       = aws_security_group.apigw_vpc_link.id
+}
+
 output "nlb_security_group_id" {
   description = "Security group ID for NLB"
   value       = aws_security_group.nlb.id

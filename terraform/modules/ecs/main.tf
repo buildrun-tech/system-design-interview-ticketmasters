@@ -56,17 +56,6 @@ resource "aws_lb_listener" "main" {
   }
 }
 
-# VPC Link for API Gateway
-resource "aws_api_gateway_vpc_link" "main" {
-  name        = "${var.name_prefix}-vpc-link"
-  description = "VPC Link for API Gateway to access internal NLB"
-  target_arns = [aws_lb.main.arn]
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-vpc-link"
-  })
-}
-
 # CloudWatch Log Group for ECS
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${var.name_prefix}"

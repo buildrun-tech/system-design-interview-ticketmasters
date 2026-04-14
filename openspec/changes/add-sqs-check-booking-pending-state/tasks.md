@@ -12,4 +12,4 @@
 ## 3. Validate
 
 - [x] 3.1 Run `terraform validate` to confirm no syntax errors
-- [ ] 3.2 Run `terraform plan` and verify the plan shows 3 new resources: main queue, DLQ, and redrive policy
+- [x] 3.2 Run `terraform plan` and verify the plan shows 3 new resources: main queue, DLQ, and redrive policy
