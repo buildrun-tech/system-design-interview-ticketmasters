@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Global throttling on all routes
 O API Gateway HTTP API v2 SHALL limitar todas as rotas a no máximo 5 requisições por segundo com burst limit de 5, usando o algoritmo Token Bucket.
