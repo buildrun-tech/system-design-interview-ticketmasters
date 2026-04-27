@@ -53,6 +53,11 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 
+  default_route_settings {
+    throttling_rate_limit  = 5
+    throttling_burst_limit = 5
+  }
+
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-http-api-stage"
   })
