@@ -5,6 +5,11 @@ data "aws_vpc" "existing" {
   id = var.vpc_id
 }
 
+data "aws_security_group" "default" {
+  name   = "default"
+  vpc_id = var.vpc_id
+}
+
 # Security Group for API Gateway VPC Link
 # No ingress needed — API Gateway manages ENI injection.
 # Egress is open; the NLB SG enforces inbound restriction.
@@ -100,6 +105,22 @@ resource "aws_security_group" "rds" {
     to_port         = var.db_port
     protocol        = "tcp"
     security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+  ingress {
+    description = "PostgreSQL from VPC CIDR"
+    from_port   = var.db_port
+    to_port     = var.db_port
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.existing.cidr_block]
+  }
+
+  ingress {
+    description     = "PostgreSQL from default SG"
+    from_port       = var.db_port
+    to_port         = var.db_port
+    protocol        = "tcp"
+    security_groups = [data.aws_security_group.default.id]
   }
 
   tags = merge(var.common_tags, {
