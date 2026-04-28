@@ -4,10 +4,15 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
 import tech.buildrun.exception.dto.InvalidParamResponse;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Provider
 public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+
+    private static final Logger logger = getLogger(ConstraintViolationExceptionMapper.class);
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
@@ -22,6 +27,14 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
                 })
                 .toList();
 
+        var violatedFields = invalidParams.stream()
+                .map(InvalidParamResponse::name)
+                .toList();
+
+        logger.atWarn()
+                .addKeyValue("httpStatus", status)
+                .addKeyValue("violatedFields", violatedFields)
+                .log("Constraint violation");
 
         return Response
                 .status(status)

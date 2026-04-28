@@ -33,19 +33,24 @@ public class CheckBookingSqsListener {
     public CompletionStage<Void> receive(Message<String> message) {
 
         try {
-            logger.info("Received message: {}", message);
-
             var dto = objectMapper.readValue(message.getPayload(), CheckBookingStateDto.class);
+
+            logger.atInfo()
+                    .addKeyValue("bookingId", dto.bookingId())
+                    .log("[Start] receive");
 
             expireBookingService.expireBookings(dto.bookingId());
 
-            logger.info("Message processed: {}", message);
+            logger.atInfo()
+                    .addKeyValue("bookingId", dto.bookingId())
+                    .log("[End] receive");
 
             return message.ack();
 
         } catch (Exception e) {
-            var msg = String.format("Error processing message: %s", message);
-            logger.error(msg, e);
+            logger.atError()
+                    .setCause(e)
+                    .log("[Error] receive");
             return message.nack(e);
         }
     }
