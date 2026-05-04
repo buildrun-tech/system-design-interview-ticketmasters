@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2" pages="2">
   <diagram name="MER" id="F0IY-iaS7zyFx-PZKdgD">
-    <mxGraphModel dx="2637" dy="1749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2209" dy="1449" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -451,14 +451,14 @@
         <mxCell id="O9teSKHK-XzP5FgkA0ws-17" value="POST - /users" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=15;" parent="1" vertex="1">
           <mxGeometry x="-410" y="1080" width="170" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="yEDIqwySKVHvtMC7Y0Ge-1" value="SELECT ....&amp;nbsp;&lt;div&gt;FOR UPDATE&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+        <mxCell id="yEDIqwySKVHvtMC7Y0Ge-1" value="SELECT ....&amp;nbsp;&lt;div&gt;FOR UPDATE&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="314" y="95" width="100" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram id="Kir4IxQAwRyY5J7KtUp5" name="AWS">
-    <mxGraphModel dx="1493" dy="356" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1493" dy="336" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -561,10 +561,10 @@
         <mxCell id="tpByzfjk1RMzbfpHet_F-1" value="secret manager" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" parent="228znNP7vzulGt4at6z9-2" vertex="1">
           <mxGeometry x="270" y="250" width="50" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="KzX7cb9T0Hb0tZPsXzUk-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="228znNP7vzulGt4at6z9-2" source="KzX7cb9T0Hb0tZPsXzUk-1" target="228znNP7vzulGt4at6z9-6">
+        <mxCell id="KzX7cb9T0Hb0tZPsXzUk-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="228znNP7vzulGt4at6z9-2" source="KzX7cb9T0Hb0tZPsXzUk-1" target="228znNP7vzulGt4at6z9-6" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="KzX7cb9T0Hb0tZPsXzUk-1" value="cloudshell" style="image;html=1;image=img/lib/clip_art/computers/Laptop_128x128.png" vertex="1" parent="228znNP7vzulGt4at6z9-2">
+        <mxCell id="KzX7cb9T0Hb0tZPsXzUk-1" value="cloudshell" style="image;html=1;image=img/lib/clip_art/computers/Laptop_128x128.png" parent="228znNP7vzulGt4at6z9-2" vertex="1">
           <mxGeometry x="25" y="40" width="40" height="30" as="geometry" />
         </mxCell>
         <mxCell id="228znNP7vzulGt4at6z9-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="B0oyEexGn5ASnxjzDncw-1" source="228znNP7vzulGt4at6z9-7" target="228znNP7vzulGt4at6z9-6" edge="1">
