@@ -1,4 +1,9 @@
-## ADDED Requirements
+# ecs-public-egress Specification
+
+## Purpose
+Define ECS task public IP assignment to enable outbound internet connectivity through an Internet Gateway, required for accessing public AWS endpoints such as Secrets Manager during task initialization.
+
+## Requirements
 
 ### Requirement: ECS tasks receive public IPs in IGW-routed subnets
 The system SHALL configure the ECS service to assign public IP addresses to task ENIs when tasks run in subnets whose route table sends `0.0.0.0/0` to an Internet Gateway.

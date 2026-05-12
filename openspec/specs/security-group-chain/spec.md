@@ -1,15 +1,55 @@
-## ADDED Requirements
+# security-group-chain Specification
 
-### Requirement: NLB security group accepts TCP 8080 from VPC CIDR
-The system SHALL create a security group for the NLB that accepts inbound TCP traffic on port 8080 from the VPC CIDR block.
+## Purpose
+Define the security group chain connecting VPC Link, NLB, ECS tasks, and RDS with least-privilege reference-based rules, ensuring traffic flows only through the intended path.
 
-#### Scenario: NLB SG allows VPC CIDR on port 8080
+## Requirements
+
+### Requirement: NLB security group accepts TCP 8080 from VPC Link Security Group only
+The system SHALL configure the NLB security group ingress rule to accept inbound TCP traffic on port 8080 exclusively from the API Gateway VPC Link Security Group ID, replacing the previous VPC CIDR-based rule.
+
+#### Scenario: NLB SG allows VPC Link SG on port 8080
 - **WHEN** NLB security group is created
-- **THEN** ingress rule allows TCP port 8080 from VPC CIDR (data.aws_vpc.existing.cidr_block)
+- **THEN** ingress rule allows TCP port 8080 with `security_groups = [var.apigw_vpc_link_sg_id]`
 
-#### Scenario: NLB SG ingress description is clear
+#### Scenario: NLB SG does not allow VPC CIDR on port 8080
+- **WHEN** NLB security group ingress rules are evaluated
+- **THEN** there is no ingress rule using `cidr_blocks` for port 8080
+
+#### Scenario: NLB SG ingress description references VPC Link
 - **WHEN** NLB security group ingress rule is created
-- **THEN** ingress rule description is "Traffic from VPC" or similar
+- **THEN** ingress rule description is "Traffic from API Gateway VPC Link" or similar
+
+#### Scenario: NLB SG has exactly one ingress rule
+- **WHEN** NLB security group ingress rules are evaluated
+- **THEN** NLB SG has only one ingress rule (from VPC Link SG)
+
+### Requirement: Networking module creates and owns the VPC Link Security Group
+The system SHALL create the `aws_security_group` for the API Gateway VPC Link inside `terraform/modules/networking/`, exporting its ID as output `apigw_vpc_link_sg_id` for the api-gateway module to consume.
+
+#### Scenario: VPC Link SG is created in the networking module
+- **WHEN** networking module is applied
+- **THEN** a security group named `${var.name_prefix}-apigw-vpc-link-sg` exists in the VPC
+
+#### Scenario: VPC Link SG has no ingress rules
+- **WHEN** VPC Link SG ingress rules are evaluated
+- **THEN** there are no ingress rules defined (API Gateway manages its own ENI injection)
+
+#### Scenario: VPC Link SG egress is unrestricted
+- **WHEN** VPC Link SG egress rules are evaluated
+- **THEN** egress rule allows all protocols to `0.0.0.0/0` (NLB SG enforces inbound restriction)
+
+#### Scenario: VPC Link SG uses lifecycle create_before_destroy
+- **WHEN** VPC Link SG resource is defined
+- **THEN** resource includes `lifecycle { create_before_destroy = true }`
+
+#### Scenario: Networking module exports VPC Link SG ID
+- **WHEN** networking module apply completes
+- **THEN** output `apigw_vpc_link_sg_id` contains the VPC Link SG ID
+
+#### Scenario: Root module passes VPC Link SG ID to api-gateway module
+- **WHEN** root main.tf instantiates the api-gateway module
+- **THEN** `apigw_vpc_link_sg_id = module.networking.apigw_vpc_link_sg_id` is passed as argument
 
 ### Requirement: NLB security group allows all outbound traffic
 The system SHALL configure the NLB security group to allow all outbound traffic for forwarding requests to ECS targets.
@@ -141,6 +181,10 @@ The system SHALL tag all security groups with common tags and descriptive names 
 ### Requirement: Security group outputs are exposed
 The system SHALL expose all security group IDs as Terraform outputs for use by dependent modules.
 
+#### Scenario: VPC Link SG ID is available
+- **WHEN** networking module apply completes
+- **THEN** output `apigw_vpc_link_sg_id` contains the VPC Link SG ID
+
 #### Scenario: NLB SG ID is available
 - **WHEN** networking module apply completes
 - **THEN** output `nlb_security_group_id` contains the NLB SG ID
@@ -158,7 +202,7 @@ The system SHALL configure security group references in one direction only to pr
 
 #### Scenario: Security group dependency chain is linear
 - **WHEN** security groups are created
-- **THEN** dependency chain is: NLB SG (no deps) -> ECS SG (refs NLB) -> RDS SG (refs ECS)
+- **THEN** dependency chain is: VPC Link SG (no deps) -> NLB SG (refs VPC Link SG) -> ECS SG (refs NLB) -> RDS SG (refs ECS)
 
 #### Scenario: No security group references itself
 - **WHEN** any security group is created

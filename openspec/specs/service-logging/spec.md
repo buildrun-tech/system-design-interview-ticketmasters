@@ -1,3 +1,10 @@
+# service-logging Specification
+
+## Purpose
+Define structured SLF4J logging standards for service methods, including Start/End bracketing, exception handling levels, and domain-specific logging rules for auth, booking, and SQS pipeline operations.
+
+## Requirements
+
 ### Requirement: Every public service method SHALL emit structured Start and End log entries
 
 Each public method in a service class SHALL log a `[Start]` entry on entry with non-sensitive input parameters, and a `[End]` entry on successful completion with relevant output context. Both entries SHALL use the SLF4J fluent API with `addKeyValue` for each contextual field.

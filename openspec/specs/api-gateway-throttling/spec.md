@@ -1,3 +1,8 @@
+# api-gateway-throttling Specification
+
+## Purpose
+Define rate limiting behavior for all API Gateway HTTP API v2 routes using the Token Bucket algorithm to protect backend services from traffic spikes.
+
 ## Requirements
 
 ### Requirement: Global throttling on all routes
