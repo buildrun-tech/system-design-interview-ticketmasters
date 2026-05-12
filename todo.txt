@@ -1,1 +1,5 @@
 - [ ] Avaliar uso do Lock no Bucket S3 ao invés do DynamoDB
+- [ ]  Avaliar o cost factor do BCrypt
+        - Quarkus default é 10. Cada ponto a menos dobra a velocidade.
+        - 9 → ~2x mais rápido. 8 → ~4x. Trade-off com segurança.
+        - Razoável para web API: cost 10 ou 11. Se estiver em 12+, reduzir faz sentido.

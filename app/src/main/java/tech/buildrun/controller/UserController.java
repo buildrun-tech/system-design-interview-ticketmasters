@@ -1,6 +1,7 @@
 package tech.buildrun.controller;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ public class UserController {
     }
 
     @POST
+    @RunOnVirtualThread
     public Response createUser(@Valid CreateUserDto dto) {
 
         var user = userService.createUser(dto);
