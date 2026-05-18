@@ -74,3 +74,8 @@ output "cloudwatch_log_group_arn" {
   description = "ARN of the CloudWatch log group"
   value       = aws_cloudwatch_log_group.app.arn
 }
+
+output "autoscaling_policy_arn" {
+  description = "ARN of the ECS CPU Target Tracking auto-scaling policy"
+  value       = aws_appautoscaling_policy.ecs_cpu.arn
+}

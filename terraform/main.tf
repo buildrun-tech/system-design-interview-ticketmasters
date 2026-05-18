@@ -116,8 +116,13 @@ module "ecs" {
   db_password_secret_arn      = module.rds.password_secret_arn
   sqs_check_booking_queue_url = module.sqs_check_booking_pending_state.queue_url
   enable_container_insights   = var.enable_container_insights
-  log_retention_days     = var.log_retention_days
-  use_fargate_spot       = var.use_fargate_spot
+  log_retention_days          = var.log_retention_days
+  use_fargate_spot            = var.use_fargate_spot
+  autoscaling_min_capacity    = var.ecs_autoscaling_min_capacity
+  autoscaling_max_capacity    = var.ecs_autoscaling_max_capacity
+  autoscaling_cpu_target      = var.ecs_autoscaling_cpu_target
+  autoscaling_scale_in_cooldown = var.ecs_autoscaling_scale_in_cooldown
+  autoscaling_scale_out_cooldown = var.ecs_autoscaling_scale_out_cooldown
 }
 
 # API Gateway Module
