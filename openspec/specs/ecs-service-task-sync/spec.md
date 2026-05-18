@@ -1,4 +1,9 @@
-## ADDED Requirements
+# ecs-service-task-sync Specification
+
+## Purpose
+Define synchronization between the ECS service and the Terraform-managed task definition revision, ensuring the service always runs the expected revision after each deployment.
+
+## Requirements
 
 ### Requirement: ECS service adopts the latest Terraform-managed task definition revision
 The system SHALL update the ECS service to the task definition revision produced by the current Terraform deployment when the rendered task definition changes.

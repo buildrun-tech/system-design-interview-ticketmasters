@@ -1,4 +1,9 @@
-## ADDED Requirements
+# sqs-module Specification
+
+## Purpose
+Define the reusable Terraform SQS module that provisions standard queues with companion DLQs and configurable redrive policies, used to create the booking expiration check queue.
+
+## Requirements
 
 ### Requirement: SQS module creates a standard queue
 

@@ -25,6 +25,12 @@ ecs_task_memory   = 1024
 ecs_desired_count = 1
 container_port    = 8080
 
+ecs_autoscaling_min_capacity = 1
+ecs_autoscaling_max_capacity = 10
+ecs_autoscaling_cpu_target = 70
+ecs_autoscaling_scale_out_cooldown = 15
+ecs_autoscaling_scale_in_cooldown = 300
+
 # Fargate Configuration (use Spot for cost savings in dev)
 use_fargate_spot = true
 

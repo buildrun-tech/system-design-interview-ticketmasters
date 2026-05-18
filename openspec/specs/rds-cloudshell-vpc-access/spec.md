@@ -1,4 +1,9 @@
-## ADDED Requirements
+# rds-cloudshell-vpc-access Specification
+
+## Purpose
+Define RDS security group rules that allow PostgreSQL access from the VPC CIDR and the VPC default security group, enabling CloudShell VPC connections to the database for operational access.
+
+## Requirements
 
 ### Requirement: RDS security group accepts TCP 5432 from VPC CIDR
 O sistema SHALL adicionar uma regra inbound ao security group do RDS que aceita conexões TCP na porta 5432 originadas de qualquer endereço dentro do CIDR da VPC.

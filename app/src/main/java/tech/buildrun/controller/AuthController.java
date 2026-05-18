@@ -23,7 +23,6 @@ public class AuthController {
 
     @POST
     @Path("/token")
-    @RunOnVirtualThread
     public Response getToken(@Valid LoginRequestDto dto) {
 
         var body = accessTokenService.getAccessToken(dto.grantType(), dto.identifier(), dto.secret());

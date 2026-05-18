@@ -1,4 +1,9 @@
-## ADDED Requirements
+# application-health-endpoint Specification
+
+## Purpose
+Define the HTTP readiness endpoint exposed by the Quarkus service so that infrastructure components such as the NLB can assess service readiness without authentication.
+
+## Requirements
 
 ### Requirement: Application exposes a readiness health endpoint
 The system SHALL expose an HTTP readiness endpoint that reports whether the Quarkus service is ready to receive production traffic.

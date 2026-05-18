@@ -176,3 +176,34 @@ variable "image_tag" {
   type        = string
   default     = null
 }
+
+# ECS Auto Scaling
+variable "ecs_autoscaling_min_capacity" {
+  description = "Minimum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_autoscaling_max_capacity" {
+  description = "Maximum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 10
+}
+
+variable "ecs_autoscaling_cpu_target" {
+  description = "Target CPU utilization percentage for ECS Target Tracking scaling policy"
+  type        = number
+  default     = 70
+}
+
+variable "ecs_autoscaling_scale_in_cooldown" {
+  description = "Cooldown period in seconds before another scale-in can happen"
+  type        = number
+  default     = 300
+}
+
+variable "ecs_autoscaling_scale_out_cooldown" {
+  description = "Cooldown period in seconds before another scale-out can happen"
+  type        = number
+  default     = 60
+}

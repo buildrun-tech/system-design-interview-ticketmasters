@@ -1,4 +1,9 @@
-## ADDED Requirements
+# nlb-routing Specification
+
+## Purpose
+Define the internal Network Load Balancer that routes TCP traffic from API Gateway VPC Link to ECS Fargate tasks, including target group health checks and cross-zone load balancing.
+
+## Requirements
 
 ### Requirement: NLB is internal only
 The system SHALL create a Network Load Balancer with `internal = true` to prevent public internet access and enable private VPC Link integration.
