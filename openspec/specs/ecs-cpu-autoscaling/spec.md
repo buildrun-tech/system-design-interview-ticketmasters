@@ -1,4 +1,9 @@
-## ADDED Requirements
+# ecs-cpu-autoscaling Specification
+
+## Purpose
+Define horizontal auto-scaling for ECS services based on CPU utilization using AWS Application Auto Scaling with Target Tracking Policy, ensuring tasks scale out and in automatically to maintain CPU usage near the configured target.
+
+## Requirements
 
 ### Requirement: ECS service registrado como scalable target
 O sistema SHALL registrar o ECS service no Application Auto Scaling com limites mínimo e máximo de capacidade configuráveis.
