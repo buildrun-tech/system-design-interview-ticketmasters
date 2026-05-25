@@ -330,21 +330,92 @@ resource "aws_appautoscaling_target" "ecs" {
   service_namespace  = "ecs"
 }
 
-# Target Tracking Scaling Policy — CPU
-resource "aws_appautoscaling_policy" "ecs_cpu" {
-  name               = "${var.name_prefix}-cpu-target-tracking"
-  policy_type        = "TargetTrackingScaling"
+# Step Scaling Policy — Scale Out
+resource "aws_appautoscaling_policy" "ecs_step_scale_out" {
+  name               = "${var.name_prefix}-cpu-step-scale-out"
+  policy_type        = "StepScaling"
   resource_id        = aws_appautoscaling_target.ecs.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
   service_namespace  = aws_appautoscaling_target.ecs.service_namespace
 
-  target_tracking_scaling_policy_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+  step_scaling_policy_configuration {
+    adjustment_type          = "ChangeInCapacity"
+    cooldown                 = var.autoscaling_scale_out_cooldown
+    metric_aggregation_type  = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      metric_interval_upper_bound = 10
+      scaling_adjustment          = 1
     }
 
-    target_value       = var.autoscaling_cpu_target
-    scale_in_cooldown  = var.autoscaling_scale_in_cooldown
-    scale_out_cooldown = var.autoscaling_scale_out_cooldown
+    step_adjustment {
+      metric_interval_lower_bound = 10
+      metric_interval_upper_bound = 25
+      scaling_adjustment          = 2
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 25
+      scaling_adjustment          = 4
+    }
   }
+}
+
+# Step Scaling Policy — Scale In
+resource "aws_appautoscaling_policy" "ecs_step_scale_in" {
+  name               = "${var.name_prefix}-cpu-step-scale-in"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = var.autoscaling_scale_in_cooldown
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+# CloudWatch Alarm — Scale Out (high-resolution: 30s, 1 evaluation period)
+resource "aws_cloudwatch_metric_alarm" "ecs_cpu_scale_out" {
+  alarm_name          = "${var.name_prefix}-ecs-cpu-scale-out"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 30
+  statistic           = "Average"
+  threshold           = var.autoscaling_scale_out_cpu_threshold
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.app.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.ecs_step_scale_out.arn]
+}
+
+# CloudWatch Alarm — Scale In (standard resolution: 60s, 3 evaluation periods)
+resource "aws_cloudwatch_metric_alarm" "ecs_cpu_scale_in" {
+  alarm_name          = "${var.name_prefix}-ecs-cpu-scale-in"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = var.autoscaling_scale_in_cpu_threshold
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.app.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.ecs_step_scale_in.arn]
 }

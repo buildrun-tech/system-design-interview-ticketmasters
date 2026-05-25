@@ -152,10 +152,16 @@ variable "autoscaling_max_capacity" {
   default     = 10
 }
 
-variable "autoscaling_cpu_target" {
-  description = "Target CPU utilization percentage for Target Tracking scaling policy"
+variable "autoscaling_scale_out_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-out alarm"
   type        = number
-  default     = 70
+  default     = 60
+}
+
+variable "autoscaling_scale_in_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-in alarm"
+  type        = number
+  default     = 40
 }
 
 variable "autoscaling_scale_in_cooldown" {
