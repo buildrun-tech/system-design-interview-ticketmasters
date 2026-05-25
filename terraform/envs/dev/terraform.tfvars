@@ -27,7 +27,8 @@ container_port    = 8080
 
 ecs_autoscaling_min_capacity = 1
 ecs_autoscaling_max_capacity = 10
-ecs_autoscaling_cpu_target = 70
+ecs_autoscaling_scale_out_cpu_threshold = 70
+ecs_autoscaling_scale_in_cpu_threshold  = 40
 ecs_autoscaling_scale_out_cooldown = 15
 ecs_autoscaling_scale_in_cooldown = 300
 

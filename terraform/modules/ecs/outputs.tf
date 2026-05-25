@@ -75,7 +75,12 @@ output "cloudwatch_log_group_arn" {
   value       = aws_cloudwatch_log_group.app.arn
 }
 
-output "autoscaling_policy_arn" {
-  description = "ARN of the ECS CPU Target Tracking auto-scaling policy"
-  value       = aws_appautoscaling_policy.ecs_cpu.arn
+output "autoscaling_scale_out_policy_arn" {
+  description = "ARN of the ECS CPU Step Scaling scale-out policy"
+  value       = aws_appautoscaling_policy.ecs_step_scale_out.arn
+}
+
+output "autoscaling_scale_in_policy_arn" {
+  description = "ARN of the ECS CPU Step Scaling scale-in policy"
+  value       = aws_appautoscaling_policy.ecs_step_scale_in.arn
 }

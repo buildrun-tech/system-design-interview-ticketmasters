@@ -190,10 +190,16 @@ variable "ecs_autoscaling_max_capacity" {
   default     = 10
 }
 
-variable "ecs_autoscaling_cpu_target" {
-  description = "Target CPU utilization percentage for ECS Target Tracking scaling policy"
+variable "ecs_autoscaling_scale_out_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-out alarm"
   type        = number
-  default     = 70
+  default     = 60
+}
+
+variable "ecs_autoscaling_scale_in_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-in alarm"
+  type        = number
+  default     = 40
 }
 
 variable "ecs_autoscaling_scale_in_cooldown" {
