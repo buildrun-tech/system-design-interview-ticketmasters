@@ -66,6 +66,30 @@ resource "aws_cloudwatch_log_group" "app" {
   })
 }
 
+# CloudWatch Log Group for ADOT Collector sidecar (task 3.3)
+resource "aws_cloudwatch_log_group" "otel_collector" {
+  name              = "/ecs/${var.name_prefix}-otel-collector"
+  retention_in_days = var.log_retention_days
+
+  tags = merge(var.common_tags, {
+    Name = "/ecs/${var.name_prefix}-otel-collector"
+  })
+}
+
+# SSM Parameter — ADOT Collector configuration YAML (task 2.2)
+resource "aws_ssm_parameter" "otel_collector_config" {
+  name  = "/${var.name_prefix}/otel-collector-config"
+  type  = "String"
+  value = templatefile("${path.module}/otel-collector-config.yaml.tftpl", {
+    aws_region  = var.aws_region
+    name_prefix = var.name_prefix
+  })
+
+  tags = merge(var.common_tags, {
+    Name = "/${var.name_prefix}/otel-collector-config"
+  })
+}
+
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
@@ -143,6 +167,26 @@ resource "aws_iam_role_policy" "ecs_task_execution_ecr_policy" {
   })
 }
 
+# SSM policy for ECS Task Execution Role — reads ADOT Collector config at task startup (task 3.5)
+resource "aws_iam_role_policy" "ecs_task_execution_ssm_policy" {
+  name = "${var.name_prefix}-ecs-task-execution-ssm-policy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = aws_ssm_parameter.otel_collector_config.arn
+      }
+    ]
+  })
+}
+
 # Grant ECS task execution role access to secrets
 resource "aws_iam_role_policy" "ecs_secrets_policy" {
   name = "${var.name_prefix}-ecs-secrets-policy"
@@ -186,6 +230,29 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 }
 
+# CloudWatch policy for ECS Task Role — allows ADOT Collector sidecar to publish EMF metrics (task 3.4)
+resource "aws_iam_role_policy" "ecs_task_cloudwatch_policy" {
+  name = "${var.name_prefix}-ecs-task-cloudwatch-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # SQS Policy for ECS Task Role
 resource "aws_iam_role_policy" "ecs_task_sqs_policy" {
   name = "${var.name_prefix}-ecs-task-sqs-policy"
@@ -226,7 +293,7 @@ resource "aws_ecs_task_definition" "app" {
     {
       name  = "ticketmaster-app"
       image = "${var.ecr_repository_url}:${var.image_tag != null ? var.image_tag : "latest-${var.environment}"}"
-      
+
       portMappings = [
         {
           containerPort = var.container_port
@@ -248,8 +315,12 @@ resource "aws_ecs_task_definition" "app" {
           value = var.db_username
         },
         {
-          name  = "SQS_CHECK_BOOKING_PENDING_STATE_QUEUE_URL",
+          name  = "SQS_CHECK_BOOKING_PENDING_STATE_QUEUE_URL"
           value = var.sqs_check_booking_queue_url
+        },
+        {
+          name  = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
+          value = "http://localhost:4317"
         }
       ]
 
@@ -270,6 +341,32 @@ resource "aws_ecs_task_definition" "app" {
       }
 
       essential = true
+    },
+    # ADOT Collector sidecar — receives OTLP metrics from the app and exports to CloudWatch EMF (task 3.2)
+    {
+      name  = "aws-otel-collector"
+      image = var.adot_collector_image
+      cpu   = 256
+      memoryReservation = 256
+
+      secrets = [
+        {
+          name      = "AOT_CONFIG_CONTENT"
+          valueFrom = aws_ssm_parameter.otel_collector_config.arn
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.otel_collector.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+
+      # essential: false — collector failure must not take down the main app
+      essential = false
     }
   ])
 
@@ -418,4 +515,164 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_scale_in" {
   }
 
   alarm_actions = [aws_appautoscaling_policy.ecs_step_scale_in.arn]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4 Golden Signals — CloudWatch Dashboard and Alarms
+# Metrics are published by the ADOT Collector sidecar via EMF to TicketMaster/App
+# ─────────────────────────────────────────────────────────────────────────────
+
+# CloudWatch Dashboard — 4 Golden Signals (task 4.1)
+resource "aws_cloudwatch_dashboard" "golden_signals" {
+  dashboard_name = "${var.name_prefix}-golden-signals"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      # Golden Signal #1 — Latência (p50 / p95 / p99)
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Latência HTTP (p50 / p95 / p99)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          yAxis  = { left = { label = "Seconds", showUnits = false } }
+          metrics = [
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p50", label = "p50", color = "#2ca02c" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p95", label = "p95", color = "#ff7f0e" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p99", label = "p99", color = "#d62728" }],
+          ]
+        }
+      },
+      # Golden Signal #2 — Tráfego (Requests/min)
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Tráfego (Requests / min)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          metrics = [
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "SampleCount", label = "Requests/min", color = "#1f77b4" }],
+          ]
+        }
+      },
+      # Golden Signal #3 — Erros (4xx / 5xx count)
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Erros HTTP (4xx / 5xx)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          metrics = [
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "CLIENT_ERROR", { stat = "SampleCount", label = "4xx (Client Error)", color = "#ff7f0e" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "SERVER_ERROR", { stat = "SampleCount", label = "5xx (Server Error)", color = "#d62728" }],
+          ]
+        }
+      },
+      # Golden Signal #4 — Saturação (JVM Heap / DB Pool)
+      {
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Saturação (JVM Heap / DB Pool)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          metrics = [
+            ["TicketMaster/App", "jvm.memory.used", "service.name", "ticketmaster", "area", "heap", { stat = "Maximum", label = "JVM Heap Used (bytes)", color = "#9467bd" }],
+            ["TicketMaster/App", "agroal.connections.active", "service.name", "ticketmaster", { stat = "Average", label = "DB Active Connections", color = "#8c564b", yAxis = "right" }],
+          ]
+        }
+      }
+    ]
+  })
+}
+
+# Alarm — Latência p99 alta (task 4.2)
+resource "aws_cloudwatch_metric_alarm" "http_latency_p99" {
+  alarm_name          = "${var.name_prefix}-http-latency-p99"
+  alarm_description   = "HTTP p99 latency exceeded ${var.latency_p99_threshold_seconds}s"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "http.server.requests"
+  namespace           = "TicketMaster/App"
+  period              = 60
+  extended_statistic  = "p99"
+  threshold           = var.latency_p99_threshold_seconds
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    "service.name" = "ticketmaster"
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-http-latency-p99"
+  })
+}
+
+# Alarm — Taxa de erros 5xx (task 4.3)
+resource "aws_cloudwatch_metric_alarm" "http_error_rate" {
+  alarm_name          = "${var.name_prefix}-http-error-rate-5xx"
+  alarm_description   = "HTTP 5xx error rate exceeded ${var.error_rate_threshold_percent}%"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  threshold           = var.error_rate_threshold_percent
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id          = "errors"
+    return_data = false
+    metric {
+      metric_name = "http.server.requests"
+      namespace   = "TicketMaster/App"
+      period      = 60
+      stat        = "SampleCount"
+      dimensions = {
+        "service.name" = "ticketmaster"
+        "outcome"      = "SERVER_ERROR"
+      }
+    }
+  }
+
+  metric_query {
+    id          = "total"
+    return_data = false
+    metric {
+      metric_name = "http.server.requests"
+      namespace   = "TicketMaster/App"
+      period      = 60
+      stat        = "SampleCount"
+      dimensions = {
+        "service.name" = "ticketmaster"
+      }
+    }
+  }
+
+  metric_query {
+    id          = "error_rate"
+    expression  = "IF(total > 0, 100 * errors / total, 0)"
+    label       = "5xx Error Rate (%)"
+    return_data = true
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-http-error-rate-5xx"
+  })
 }

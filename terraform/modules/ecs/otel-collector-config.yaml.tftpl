@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+    timeout: 60s
+    send_batch_max_size: 1000
+
+exporters:
+  awsemf:
+    namespace: TicketMaster/App
+    log_group_name: /ecs/${name_prefix}-otel-collector
+    log_stream_name: "otel-metrics"
+    region: ${aws_region}
+    dimension_rollup_option: "NoDimensionRollup"
+    resource_to_telemetry_conversion:
+      enabled: true
+    metric_declarations:
+      - dimensions:
+          - [service.name]
+          - [service.name, deployment.environment]
+        metric_name_selectors:
+          - ".*"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [awsemf]

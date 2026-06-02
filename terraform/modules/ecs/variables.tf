@@ -175,3 +175,22 @@ variable "autoscaling_scale_out_cooldown" {
   type        = number
   default     = 60
 }
+
+# Observability — ADOT Collector Sidecar
+variable "adot_collector_image" {
+  description = "Docker image for the AWS Distro for OpenTelemetry (ADOT) Collector sidecar"
+  type        = string
+  default     = "amazon/aws-otel-collector:v0.43.4"
+}
+
+variable "latency_p99_threshold_seconds" {
+  description = "P99 HTTP latency threshold in seconds for CloudWatch alarm"
+  type        = number
+  default     = 2.0
+}
+
+variable "error_rate_threshold_percent" {
+  description = "HTTP 5xx error rate threshold (%) for CloudWatch alarm"
+  type        = number
+  default     = 5
+}
