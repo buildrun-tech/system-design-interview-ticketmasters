@@ -1,4 +1,14 @@
 services:
+  otel-collector:
+    image: amazon/aws-otel-collector:v0.48.0
+    container_name: ticketmaster-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config-local.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
   localstack:
     container_name: "ticketmaster-localstack"
     image: localstack/localstack

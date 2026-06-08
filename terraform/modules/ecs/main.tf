@@ -320,7 +320,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
-          value = "http://localhost:4317"
+          value = "http://localhost:4318"
         }
       ]
 
