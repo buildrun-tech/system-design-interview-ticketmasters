@@ -216,9 +216,9 @@ variable "ecs_autoscaling_scale_out_cooldown" {
 
 # Observability — 4 Golden Signals
 variable "adot_collector_image" {
-  description = "Docker image for the ADOT Collector sidecar (e.g. amazon/aws-otel-collector:v0.43.4)"
+  description = "Docker image for the ADOT Collector sidecar (e.g. amazon/aws-otel-collector:v0.48.0)"
   type        = string
-  default     = "amazon/aws-otel-collector:v0.43.4"
+  default     = "amazon/aws-otel-collector:v0.48.0"
 }
 
 variable "latency_p99_threshold_seconds" {
