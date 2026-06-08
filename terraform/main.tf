@@ -124,6 +124,10 @@ module "ecs" {
   autoscaling_scale_in_cpu_threshold   = var.ecs_autoscaling_scale_in_cpu_threshold
   autoscaling_scale_in_cooldown        = var.ecs_autoscaling_scale_in_cooldown
   autoscaling_scale_out_cooldown       = var.ecs_autoscaling_scale_out_cooldown
+  # 4 Golden Signals observability
+  adot_collector_image          = var.adot_collector_image
+  latency_p99_threshold_seconds = var.latency_p99_threshold_seconds
+  error_rate_threshold_percent  = var.error_rate_threshold_percent
 }
 
 # API Gateway Module
