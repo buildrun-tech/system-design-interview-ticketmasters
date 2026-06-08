@@ -180,7 +180,7 @@ variable "autoscaling_scale_out_cooldown" {
 variable "adot_collector_image" {
   description = "Docker image for the AWS Distro for OpenTelemetry (ADOT) Collector sidecar"
   type        = string
-  default     = "amazon/aws-otel-collector:v0.43.4"
+  default     = "amazon/aws-otel-collector:v0.48.0"
 }
 
 variable "latency_p99_threshold_seconds" {
