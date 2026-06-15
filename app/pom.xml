@@ -113,9 +113,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-micrometer</artifactId>
         </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/io.quarkiverse.micrometer.registry/quarkus-micrometer-registry-otlp -->
         <dependency>
-            <groupId>io.quarkus</groupId>
+            <groupId>io.quarkiverse.micrometer.registry</groupId>
             <artifactId>quarkus-micrometer-registry-otlp</artifactId>
+            <version>3.5.0</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
