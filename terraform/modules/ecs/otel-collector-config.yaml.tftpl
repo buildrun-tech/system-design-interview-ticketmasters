@@ -13,6 +13,8 @@ processors:
     send_batch_max_size: 1000
 
 exporters:
+  debug:
+    verbosity: detailed
   awsemf:
     namespace: TicketMaster/App
     log_group_name: /ecs/${name_prefix}-otel-collector
@@ -33,4 +35,4 @@ service:
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [awsemf]
+      exporters: [debug, awsemf]
