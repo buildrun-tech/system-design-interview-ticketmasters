@@ -528,7 +528,9 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
 
   dashboard_body = jsonencode({
     widgets = [
-      # Golden Signal #1 — Latência (p50 / p95 / p99)
+      # Golden Signal #1 — Latência (avg / min / max)
+      # Micrometer OTLP exports timers as StatisticSet (Sum/Count/Min/Max) — percentile
+      # statistics (p50/p95/p99) require explicit histogram buckets and return 0 without them.
       {
         type   = "metric"
         x      = 0
@@ -536,19 +538,20 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
         width  = 12
         height = 6
         properties = {
-          title  = "Latência HTTP (p50 / p95 / p99)"
+          title  = "Latência HTTP (avg / min / max)"
           view   = "timeSeries"
           period = 60
           region = var.aws_region
           yAxis  = { left = { label = "Seconds", showUnits = false } }
           metrics = [
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p50", label = "p50", color = "#2ca02c" }],
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p95", label = "p95", color = "#ff7f0e" }],
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "p99", label = "p99", color = "#d62728" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "Average", label = "avg", color = "#2ca02c" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "Minimum", label = "min", color = "#1f77b4" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "Maximum", label = "max", color = "#d62728" }],
           ]
         }
       },
       # Golden Signal #2 — Tráfego (Requests/min)
+      # SampleCount maps to the Count field of the EMF StatisticSet = number of requests per period.
       {
         type   = "metric"
         x      = 12
@@ -561,11 +564,13 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
           period = 60
           region = var.aws_region
           metrics = [
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "Average", label = "Requests/min", color = "#1f77b4" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "SampleCount", label = "Requests/min", color = "#1f77b4" }],
           ]
         }
       },
       # Golden Signal #3 — Erros (4xx / 5xx count)
+      # FILL(m, 0) replaces gaps (no errors = no datapoint published) with zero,
+      # so the chart shows spikes only when errors actually occurred.
       {
         type   = "metric"
         x      = 0
@@ -578,8 +583,10 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
           period = 60
           region = var.aws_region
           metrics = [
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "CLIENT_ERROR", { stat = "SampleCount", label = "4xx (Client Error)", color = "#ff7f0e" }],
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "SERVER_ERROR", { stat = "SampleCount", label = "5xx (Server Error)", color = "#d62728" }],
+            [{ id = "e4xx", expression = "FILL(m4xx,0)", label = "4xx (Client Error)", color = "#ff7f0e" }],
+            [{ id = "e5xx", expression = "FILL(m5xx,0)", label = "5xx (Server Error)", color = "#d62728" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "CLIENT_ERROR", { id = "m4xx", stat = "SampleCount", visible = false }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", "outcome", "SERVER_ERROR", { id = "m5xx", stat = "SampleCount", visible = false }],
           ]
         }
       },
@@ -598,6 +605,44 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
           metrics = [
             ["TicketMaster/App", "jvm.memory.used", "service.name", "ticketmaster", "area", "heap", { stat = "Maximum", label = "JVM Heap Used (bytes)", color = "#9467bd" }],
             ["TicketMaster/App", "agroal.connections.active", "service.name", "ticketmaster", { stat = "Average", label = "DB Active Connections", color = "#8c564b", yAxis = "right" }],
+          ]
+        }
+      },
+      # ECS Task — CPU Utilization (% of task CPU limit)
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "CPU Utilization (% do limit da task)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          yAxis  = { left = { min = 0, max = 100, label = "%", showUnits = false } }
+          metrics = [
+            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.app.name, { stat = "Average", label = "CPU avg (%)", color = "#e377c2" }],
+            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.app.name, { stat = "Maximum", label = "CPU max (%)", color = "#d62728" }],
+          ]
+        }
+      },
+      # ECS Task — Memory Utilization (% of task memory limit)
+      {
+        type   = "metric"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Memory Utilization (% do limit da task)"
+          view   = "timeSeries"
+          period = 60
+          region = var.aws_region
+          yAxis  = { left = { min = 0, max = 100, label = "%", showUnits = false } }
+          metrics = [
+            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.app.name, { stat = "Average", label = "Memory avg (%)", color = "#17becf" }],
+            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.app.name, { stat = "Maximum", label = "Memory max (%)", color = "#9467bd" }],
           ]
         }
       }
