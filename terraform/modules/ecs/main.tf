@@ -561,7 +561,7 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
           period = 60
           region = var.aws_region
           metrics = [
-            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "SampleCount", label = "Requests/min", color = "#1f77b4" }],
+            ["TicketMaster/App", "http.server.requests", "service.name", "ticketmaster", { stat = "Average", label = "Requests/min", color = "#1f77b4" }],
           ]
         }
       },

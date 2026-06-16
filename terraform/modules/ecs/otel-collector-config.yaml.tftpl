@@ -24,11 +24,24 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
     metric_declarations:
+      # Global rollup — all metrics queryable by service alone
       - dimensions:
           - [service.name]
           - [service.name, deployment.environment]
         metric_name_selectors:
           - ".*"
+      # HTTP metrics — outcome dimension needed for error-rate dashboard widget
+      - dimensions:
+          - [service.name, outcome]
+        metric_name_selectors:
+          - "http.server.requests"
+      # JVM memory — area dimension needed to separate heap from nonheap
+      - dimensions:
+          - [service.name, area]
+        metric_name_selectors:
+          - "jvm.memory.used"
+          - "jvm.memory.committed"
+          - "jvm.memory.max"
 
 service:
   pipelines:
