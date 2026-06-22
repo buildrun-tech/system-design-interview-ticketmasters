@@ -201,10 +201,24 @@ resource "aws_iam_role_policy" "ecs_secrets_policy" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          var.db_password_secret_arn
+          var.db_password_secret_arn,
+          aws_secretsmanager_secret.jwt_keys.arn
         ]
       }
     ]
+  })
+}
+
+# Secret container for JWT signing/verification keys — value is populated manually
+# outside Terraform (no aws_secretsmanager_secret_version here), so the PEM
+# content never lands in the .tfstate.
+resource "aws_secretsmanager_secret" "jwt_keys" {
+  name                    = "${var.name_prefix}-jwt-keys"
+  description             = "JWT public/private key pair (PEM) for ${var.name_prefix} — value populated manually"
+  recovery_window_in_days = 0
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-jwt-keys"
   })
 }
 
@@ -328,6 +342,14 @@ resource "aws_ecs_task_definition" "app" {
         {
           name      = "QUARKUS_DATASOURCE_PASSWORD"
           valueFrom = var.db_password_secret_arn
+        },
+        {
+          name      = "MP_JWT_VERIFY_PUBLICKEY"
+          valueFrom = "${aws_secretsmanager_secret.jwt_keys.arn}:publicKey::"
+        },
+        {
+          name      = "SMALLRYE_JWT_SIGN_KEY"
+          valueFrom = "${aws_secretsmanager_secret.jwt_keys.arn}:privateKey::"
         }
       ]
 
@@ -602,6 +624,10 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
           view   = "timeSeries"
           period = 60
           region = var.aws_region
+          yAxis = {
+            left  = { label = "Bytes", showUnits = false }
+            right = { label = "Connections", showUnits = false, min = 0 }
+          }
           metrics = [
             ["TicketMaster/App", "jvm.memory.used", "service.name", "ticketmaster", "area", "heap", { stat = "Maximum", label = "JVM Heap Used (bytes)", color = "#9467bd" }],
             ["TicketMaster/App", "agroal.connections.active", "service.name", "ticketmaster", { stat = "Average", label = "DB Active Connections", color = "#8c564b", yAxis = "right" }],
@@ -650,16 +676,21 @@ resource "aws_cloudwatch_dashboard" "golden_signals" {
   })
 }
 
-# Alarm — Latência p99 alta (task 4.2)
+# Alarm — Latência máxima alta (task 4.2)
+# extended_statistic "p99" was removed: Micrometer OTLP exports timers as a
+# StatisticSet (Sum/Count/Min/Max), which has no histogram buckets, so
+# CloudWatch extended (percentile) statistics always evaluate to 0/no data
+# and the alarm never fired. Maximum is the closest equivalent CloudWatch
+# can compute from a StatisticSet.
 resource "aws_cloudwatch_metric_alarm" "http_latency_p99" {
-  alarm_name          = "${var.name_prefix}-http-latency-p99"
-  alarm_description   = "HTTP p99 latency exceeded ${var.latency_p99_threshold_seconds}s"
+  alarm_name          = "${var.name_prefix}-http-latency-max"
+  alarm_description   = "HTTP max latency exceeded ${var.latency_p99_threshold_seconds}s"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "http.server.requests"
   namespace           = "TicketMaster/App"
   period              = 60
-  extended_statistic  = "p99"
+  statistic           = "Maximum"
   threshold           = var.latency_p99_threshold_seconds
   treat_missing_data  = "notBreaching"
 

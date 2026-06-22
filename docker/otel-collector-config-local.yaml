@@ -7,6 +7,7 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  cumulativetodelta:
   batch:
     timeout: 60s
     send_batch_size: 100
@@ -20,5 +21,5 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [batch]
+      processors: [cumulativetodelta, batch]
       exporters: [debug]

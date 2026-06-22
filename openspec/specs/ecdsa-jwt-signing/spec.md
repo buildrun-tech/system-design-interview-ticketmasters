@@ -1,5 +1,11 @@
 # ecdsa-jwt-signing Specification
 
+<!-- NOTE (jwt-keys-secrets-manager): a partir do change jwt-keys-secrets-manager, as chaves
+     JWT em dev/prod deixam de vir do classpath e passam a ser injetadas via AWS Secrets
+     Manager pelo ECS; localmente, vêm de app/local-keys/ sob o profile `local`. O requisito
+     abaixo ("chave privada EC SHALL estar disponível no classpath") precisa ser revisado
+     quando esta migração RSA→ES256 for retomada, para refletir o novo mecanismo de entrega. -->
+
 ## Purpose
 Define the migration of JWT signing from RSA-2048 (RS256) to ECDSA P-256 (ES256), including key configuration, token issuance, and verification behavior after the migration.
 

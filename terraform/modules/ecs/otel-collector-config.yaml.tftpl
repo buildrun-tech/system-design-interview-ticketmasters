@@ -7,6 +7,10 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  # Micrometer exports cumulative Sum/Histogram temporality; awsemf needs deltas
+  # per period, otherwise idle periods republish the same cumulative value
+  # instead of showing zero/no activity.
+  cumulativetodelta:
   batch:
     timeout: 60s
     send_batch_size: 100
@@ -47,5 +51,5 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [batch]
+      processors: [cumulativetodelta, batch]
       exporters: [debug, awsemf]
