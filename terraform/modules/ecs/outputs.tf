@@ -45,6 +45,11 @@ output "task_role_arn" {
   value       = aws_iam_role.ecs_task_role.arn
 }
 
+output "jwt_keys_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the JWT public/private key pair"
+  value       = aws_secretsmanager_secret.jwt_keys.arn
+}
+
 output "nlb_arn" {
   description = "ARN of the Network Load Balancer"
   value       = aws_lb.main.arn
