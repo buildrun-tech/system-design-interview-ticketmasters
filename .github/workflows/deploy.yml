@@ -153,7 +153,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ~1.0
+          terraform_version: 1.10.1
           terraform_wrapper: false
 
       - name: Verify Terraform setup
@@ -377,7 +377,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ~1.0
+          terraform_version: 1.10.1
           terraform_wrapper: false
 
       - name: Read destroy configuration
