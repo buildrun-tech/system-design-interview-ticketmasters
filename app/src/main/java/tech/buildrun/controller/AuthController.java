@@ -1,6 +1,6 @@
 package tech.buildrun.controller;
 
-import jakarta.annotation.security.PermitAll;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.POST;

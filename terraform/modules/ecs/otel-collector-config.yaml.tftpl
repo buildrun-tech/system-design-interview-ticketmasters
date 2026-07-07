@@ -1,0 +1,55 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Micrometer exports cumulative Sum/Histogram temporality; awsemf needs deltas
+  # per period, otherwise idle periods republish the same cumulative value
+  # instead of showing zero/no activity.
+  cumulativetodelta:
+  batch:
+    timeout: 60s
+    send_batch_size: 100
+    send_batch_max_size: 1000
+
+exporters:
+  debug:
+    verbosity: detailed
+  awsemf:
+    namespace: TicketMaster/App
+    log_group_name: /ecs/${name_prefix}-otel-collector
+    log_stream_name: "otel-metrics"
+    region: ${aws_region}
+    dimension_rollup_option: "NoDimensionRollup"
+    resource_to_telemetry_conversion:
+      enabled: true
+    metric_declarations:
+      # Global rollup — all metrics queryable by service alone
+      - dimensions:
+          - [service.name]
+          - [service.name, deployment.environment]
+        metric_name_selectors:
+          - ".*"
+      # HTTP metrics — outcome dimension needed for error-rate dashboard widget
+      - dimensions:
+          - [service.name, outcome]
+        metric_name_selectors:
+          - "http.server.requests"
+      # JVM memory — area dimension needed to separate heap from nonheap
+      - dimensions:
+          - [service.name, area]
+        metric_name_selectors:
+          - "jvm.memory.used"
+          - "jvm.memory.committed"
+          - "jvm.memory.max"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [cumulativetodelta, batch]
+      exporters: [debug, awsemf]

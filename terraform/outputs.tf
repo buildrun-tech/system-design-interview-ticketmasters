@@ -1,25 +1,14 @@
 # Terraform Outputs for TicketMaster CI/CD Infrastructure
 
-# ECR Outputs
-output "ecr_repository_url" {
-  description = "URL of the ECR repository"
-  value       = module.ecr.repository_url
-}
-
-output "ecr_repository_arn" {
-  description = "ARN of the ECR repository"
-  value       = module.ecr.repository_arn
-}
-
-output "ecr_registry_id" {
-  description = "Registry ID of the ECR repository"
-  value       = module.ecr.registry_id
-}
-
 # ECS Outputs
 output "ecs_cluster_id" {
   description = "ID of the ECS cluster"
   value       = module.ecs.cluster_id
+}
+
+output "ecs_cluster_name" {
+  description = "Name of the ECS cluster"
+  value       = module.ecs.cluster_name
 }
 
 output "ecs_cluster_arn" {
@@ -30,6 +19,11 @@ output "ecs_cluster_arn" {
 output "ecs_service_id" {
   description = "ID of the ECS service"
   value       = module.ecs.service_id
+}
+
+output "ecs_service_name" {
+  description = "Name of the ECS service"
+  value       = module.ecs.service_name
 }
 
 output "ecs_service_arn" {
@@ -95,46 +89,37 @@ output "vpc_cidr_block" {
   value       = module.networking.vpc_cidr_block
 }
 
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = module.networking.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = module.networking.private_subnet_ids
-}
-
 # Load Balancer Outputs
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
-  value       = module.ecs.alb_arn
+output "nlb_arn" {
+  description = "ARN of the Network Load Balancer"
+  value       = module.ecs.nlb_arn
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = module.ecs.alb_dns_name
+output "nlb_dns_name" {
+  description = "DNS name of the Network Load Balancer"
+  value       = module.ecs.nlb_dns_name
 }
 
-output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
-  value       = module.ecs.alb_zone_id
+output "nlb_zone_id" {
+  description = "Zone ID of the Network Load Balancer"
+  value       = module.ecs.nlb_zone_id
 }
 
-output "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
-  value       = module.ecs.alb_target_group_arn
+# API Gateway Outputs
+output "api_gateway_endpoint" {
+  description = "HTTPS invoke URL of the API Gateway HTTP API"
+  value       = module.api_gateway.api_gateway_endpoint
 }
 
-output "application_url" {
-  description = "URL to access the application"
-  value       = module.ecs.application_url
+output "vpc_link_id" {
+  description = "ID of the VPC Link v2 for API Gateway"
+  value       = module.api_gateway.vpc_link_id
 }
 
 # Security Group Outputs
-output "alb_security_group_id" {
-  description = "ID of the ALB security group"
-  value       = module.networking.alb_security_group_id
+output "nlb_security_group_id" {
+  description = "ID of the NLB security group"
+  value       = module.networking.nlb_security_group_id
 }
 
 output "ecs_security_group_id" {
@@ -156,6 +141,17 @@ output "cloudwatch_log_group_name" {
 output "cloudwatch_log_group_arn" {
   description = "ARN of the CloudWatch log group"
   value       = module.ecs.cloudwatch_log_group_arn
+}
+
+# SQS Outputs
+output "check_booking_pending_state_queue_url" {
+  description = "URL of the check-booking-pending-state SQS queue"
+  value       = module.sqs_check_booking_pending_state.queue_url
+}
+
+output "check_booking_pending_state_queue_arn" {
+  description = "ARN of the check-booking-pending-state SQS queue"
+  value       = module.sqs_check_booking_pending_state.queue_arn
 }
 
 # Environment Information

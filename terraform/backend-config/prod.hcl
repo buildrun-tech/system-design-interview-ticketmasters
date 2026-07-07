@@ -2,7 +2,7 @@
 
 bucket         = "ticketmaster-terraform-state-prod"
 key            = "prod/terraform.tfstate"
-region         = "us-east-1"
+region         = "us-east-2"
 encrypt        = true
 dynamodb_table = "ticketmaster-terraform-locks-prod"
 

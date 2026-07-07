@@ -10,19 +10,14 @@ output "vpc_cidr_block" {
   value       = data.aws_vpc.existing.cidr_block
 }
 
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = var.public_subnet_ids
+output "apigw_vpc_link_sg_id" {
+  description = "Security group ID for the API Gateway VPC Link"
+  value       = aws_security_group.apigw_vpc_link.id
 }
 
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = var.private_subnet_ids
-}
-
-output "alb_security_group_id" {
-  description = "ID of the ALB security group"
-  value       = aws_security_group.alb.id
+output "nlb_security_group_id" {
+  description = "Security group ID for NLB"
+  value       = aws_security_group.nlb.id
 }
 
 output "ecs_security_group_id" {

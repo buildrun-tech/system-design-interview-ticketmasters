@@ -191,3 +191,21 @@ terraform import aws_s3_bucket.example bucket-name
 # Refresh state
 terraform refresh -var-file=environments/dev.tfvars
 ```
+
+### ECS Service Revision Checks
+
+Use these commands when a deployment succeeds but you need to verify which task definition revision the ECS service is actually running:
+
+```bash
+terraform output -raw ecs_task_definition_arn
+terraform output -raw ecs_cluster_name
+terraform output -raw ecs_service_name
+
+aws ecs describe-services \
+  --cluster "$(terraform output -raw ecs_cluster_name)" \
+  --services "$(terraform output -raw ecs_service_name)" \
+  --query 'services[0].taskDefinition' \
+  --output text
+```
+
+The two task definition ARNs should match after a successful apply. If they differ, the service did not advance to the expected revision and the deployment should be treated as out of sync.

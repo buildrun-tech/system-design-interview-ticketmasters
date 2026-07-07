@@ -23,56 +23,10 @@ variable "aws_region" {
 }
 
 # ECR Configuration
-variable "ecr_repository_name" {
-  description = "Name of the ECR repository"
+variable "ecr_repository_url" {
+  description = "URL of the ECR repository"
   type        = string
   default     = "ticketmaster-app"
-}
-
-variable "ecr_image_tag_mutability" {
-  description = "Image tag mutability setting for ECR repository"
-  type        = string
-  default     = "MUTABLE"
-  validation {
-    condition     = contains(["MUTABLE", "IMMUTABLE"], var.ecr_image_tag_mutability)
-    error_message = "ECR image tag mutability must be either 'MUTABLE' or 'IMMUTABLE'."
-  }
-}
-
-variable "ecr_lifecycle_policy" {
-  description = "Lifecycle policy for ECR repository"
-  type        = string
-  default     = <<EOF
-{
-  "rules": [
-    {
-      "rulePriority": 1,
-      "description": "Keep last 10 images",
-      "selection": {
-        "tagStatus": "tagged",
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": {
-        "type": "expire"
-      }
-    },
-    {
-      "rulePriority": 2,
-      "description": "Delete untagged images older than 1 day",
-      "selection": {
-        "tagStatus": "untagged",
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": 1
-      },
-      "action": {
-        "type": "expire"
-      }
-    }
-  ]
-}
-EOF
 }
 
 # ECS Configuration
@@ -177,51 +131,9 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "List of existing public subnet IDs"
-  type        = list(string)
-}
-
 variable "private_subnet_ids" {
-  description = "List of existing private subnet IDs"
+  description = "List of existing private subnet IDs for NLB and ECS tasks"
   type        = list(string)
-}
-
-# Load Balancer Configuration
-variable "alb_name" {
-  description = "Name of the Application Load Balancer"
-  type        = string
-  default     = null # Will use local.name_prefix if not provided
-}
-
-variable "health_check_path" {
-  description = "Health check path for ALB target group"
-  type        = string
-  default     = "/q/health"
-}
-
-variable "health_check_interval" {
-  description = "Health check interval in seconds"
-  type        = number
-  default     = 30
-}
-
-variable "health_check_timeout" {
-  description = "Health check timeout in seconds"
-  type        = number
-  default     = 5
-}
-
-variable "health_check_healthy_threshold" {
-  description = "Number of consecutive successful health checks"
-  type        = number
-  default     = 2
-}
-
-variable "health_check_unhealthy_threshold" {
-  description = "Number of consecutive failed health checks"
-  type        = number
-  default     = 3
 }
 
 # Security Configuration
@@ -256,4 +168,67 @@ variable "use_fargate_spot" {
   description = "Use Fargate Spot instances (recommended: true for dev, false for prod)"
   type        = bool
   default     = false
+}
+
+# Deployment Image
+variable "image_tag" {
+  description = "Image tag for the ECS task definition, selected by the current workflow run. When null, falls back to the environment default tag (latest-<environment>)."
+  type        = string
+  default     = null
+}
+
+# ECS Auto Scaling
+variable "ecs_autoscaling_min_capacity" {
+  description = "Minimum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_autoscaling_max_capacity" {
+  description = "Maximum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 10
+}
+
+variable "ecs_autoscaling_scale_out_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-out alarm"
+  type        = number
+  default     = 60
+}
+
+variable "ecs_autoscaling_scale_in_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-in alarm"
+  type        = number
+  default     = 40
+}
+
+variable "ecs_autoscaling_scale_in_cooldown" {
+  description = "Cooldown period in seconds before another scale-in can happen"
+  type        = number
+  default     = 300
+}
+
+variable "ecs_autoscaling_scale_out_cooldown" {
+  description = "Cooldown period in seconds before another scale-out can happen"
+  type        = number
+  default     = 60
+}
+
+# Observability — 4 Golden Signals
+variable "adot_collector_image" {
+  description = "Docker image for the ADOT Collector sidecar (e.g. amazon/aws-otel-collector:v0.48.0)"
+  type        = string
+  default     = "amazon/aws-otel-collector:v0.48.0"
+}
+
+variable "latency_p99_threshold_seconds" {
+  description = "P99 HTTP latency threshold in seconds to trigger the CloudWatch alarm"
+  type        = number
+  default     = 2.0
+}
+
+variable "error_rate_threshold_percent" {
+  description = "HTTP 5xx error rate threshold (%) to trigger the CloudWatch alarm"
+  type        = number
+  default     = 5
 }

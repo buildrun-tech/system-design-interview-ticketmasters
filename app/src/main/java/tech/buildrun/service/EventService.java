@@ -3,6 +3,7 @@ package tech.buildrun.service;
 import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
 import tech.buildrun.controller.dto.*;
 import tech.buildrun.entity.EventEntity;
 import tech.buildrun.entity.SeatEntity;
@@ -12,8 +13,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 @ApplicationScoped
 public class EventService {
+
+    private static final Logger logger = getLogger(EventService.class);
 
     public ApiListDto<EventDto> findAll(int page, int pageSize) {
         var query = EventEntity.findAll()
@@ -34,6 +39,12 @@ public class EventService {
 
     @Transactional
     public EventDto createEvent(CreateEventDto dto) {
+
+        logger.atInfo()
+                .addKeyValue("eventName", dto.name())
+                .addKeyValue("numberOfSeats", dto.settings().numberOfSeats())
+                .log("[Start] createEvent");
+
         var eventEntity = dto.toEntity();
 
         eventEntity.persist();
@@ -46,14 +57,38 @@ public class EventService {
             entitySeat.persist();
         }
 
-        return EventDto.fromEntity(eventEntity);
+        var result = EventDto.fromEntity(eventEntity);
+
+        logger.atInfo()
+                .addKeyValue("eventId", result.id())
+                .addKeyValue("eventName", result.name())
+                .log("[End] createEvent");
+
+        return result;
     }
 
     public Optional<EventDto> findById(Long id) {
 
-        return EventEntity.findByIdOptional(id)
+        logger.atInfo()
+                .addKeyValue("eventId", id)
+                .log("[Start] findById");
+
+        var result = EventEntity.findByIdOptional(id)
                 .map(EventEntity.class::cast)
                 .map(EventDto::fromEntity);
+
+        if (result.isEmpty()) {
+            logger.atWarn()
+                    .addKeyValue("eventId", id)
+                    .addKeyValue("reason", "NOT_FOUND")
+                    .log("[End] findById");
+        } else {
+            logger.atInfo()
+                    .addKeyValue("eventId", id)
+                    .log("[End] findById");
+        }
+
+        return result;
     }
 
     public ApiListDto<SeatDto> findAllSeats(Long eventId,

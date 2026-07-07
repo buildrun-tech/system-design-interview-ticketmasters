@@ -10,7 +10,8 @@ resource "random_password" "db_password" {
 resource "aws_secretsmanager_secret" "db_password" {
   name                    = "${var.name_prefix}-db-password"
   description             = "Database password for ${var.name_prefix}"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
+
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-db-password"

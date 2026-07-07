@@ -16,19 +16,10 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "List of existing public subnet IDs"
-  type        = list(string)
-}
-
-variable "private_subnet_ids" {
-  description = "List of existing private subnet IDs"
-  type        = list(string)
-}
-
 variable "allowed_cidr_blocks" {
-  description = "CIDR blocks allowed to access the load balancer"
+  description = "CIDR blocks allowed to access the load balancer (deprecated - NLB uses VPC CIDR)"
   type        = list(string)
+  default     = []
 }
 
 variable "container_port" {

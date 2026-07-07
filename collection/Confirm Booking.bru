@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/bookings/confirm
+  url: {{api-url}}/bookings/confirm
   body: json
   auth: bearer
 }
@@ -16,7 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "bookingId": 401
+    "bookingId": 3
   }
 }
 

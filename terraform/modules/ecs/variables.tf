@@ -27,18 +27,19 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "List of public subnet IDs for ALB"
-  type        = list(string)
-}
-
 variable "private_subnet_ids" {
-  description = "List of private subnet IDs for ECS tasks"
+  description = "List of subnet IDs for NLB and ECS tasks"
   type        = list(string)
 }
 
-variable "alb_security_group_id" {
-  description = "Security group ID for ALB"
+variable "assign_public_ip" {
+  description = "Whether ECS task ENIs should receive public IP addresses"
+  type        = bool
+  default     = true
+}
+
+variable "nlb_security_group_id" {
+  description = "Security group ID for NLB"
   type        = string
 }
 
@@ -105,36 +106,7 @@ variable "db_password_secret_arn" {
   type        = string
 }
 
-# Load Balancer Configuration
-variable "alb_name" {
-  description = "Name of the Application Load Balancer"
-  type        = string
-}
-
-variable "health_check_path" {
-  description = "Health check path for ALB target group"
-  type        = string
-}
-
-variable "health_check_interval" {
-  description = "Health check interval in seconds"
-  type        = number
-}
-
-variable "health_check_timeout" {
-  description = "Health check timeout in seconds"
-  type        = number
-}
-
-variable "health_check_healthy_threshold" {
-  description = "Number of consecutive successful health checks"
-  type        = number
-}
-
-variable "health_check_unhealthy_threshold" {
-  description = "Number of consecutive failed health checks"
-  type        = number
-}
+# Load Balancer Configuration - removed ALB-specific variables for NLB
 
 # Monitoring and Logging
 variable "enable_container_insights" {
@@ -152,4 +124,73 @@ variable "use_fargate_spot" {
   description = "Use Fargate Spot instances (true for dev, false for prod)"
   type        = bool
   default     = false
+}
+
+# SQS
+variable "sqs_check_booking_queue_url" {
+  description = "URL of the SQS queue for check-booking-pending-state"
+  type        = string
+}
+
+# Deployment Image
+variable "image_tag" {
+  description = "Image tag for the ECS task definition. When null, falls back to latest-<environment>."
+  type        = string
+  default     = null
+}
+
+# Auto Scaling
+variable "autoscaling_min_capacity" {
+  description = "Minimum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 1
+}
+
+variable "autoscaling_max_capacity" {
+  description = "Maximum number of ECS tasks for auto-scaling"
+  type        = number
+  default     = 10
+}
+
+variable "autoscaling_scale_out_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-out alarm"
+  type        = number
+  default     = 60
+}
+
+variable "autoscaling_scale_in_cpu_threshold" {
+  description = "CPU utilization percentage threshold to trigger scale-in alarm"
+  type        = number
+  default     = 40
+}
+
+variable "autoscaling_scale_in_cooldown" {
+  description = "Cooldown period in seconds before another scale-in can happen"
+  type        = number
+  default     = 300
+}
+
+variable "autoscaling_scale_out_cooldown" {
+  description = "Cooldown period in seconds before another scale-out can happen"
+  type        = number
+  default     = 60
+}
+
+# Observability — ADOT Collector Sidecar
+variable "adot_collector_image" {
+  description = "Docker image for the AWS Distro for OpenTelemetry (ADOT) Collector sidecar"
+  type        = string
+  default     = "amazon/aws-otel-collector:v0.48.0"
+}
+
+variable "latency_p99_threshold_seconds" {
+  description = "P99 HTTP latency threshold in seconds for CloudWatch alarm"
+  type        = number
+  default     = 2.0
+}
+
+variable "error_rate_threshold_percent" {
+  description = "HTTP 5xx error rate threshold (%) for CloudWatch alarm"
+  type        = number
+  default     = 5
 }

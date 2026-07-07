@@ -1,0 +1,46 @@
+# ecs-service-task-sync Specification
+
+## Purpose
+Define synchronization between the ECS service and the Terraform-managed task definition revision, ensuring the service always runs the expected revision after each deployment.
+
+## Requirements
+
+### Requirement: ECS service adopts the latest Terraform-managed task definition revision
+The system SHALL update the ECS service to the task definition revision produced by the current Terraform deployment when the rendered task definition changes.
+
+#### Scenario: New task definition revision is registered during apply
+- **WHEN** Terraform creates a new ECS task definition revision for the application service
+- **THEN** the same apply updates the ECS service to reference that new revision
+
+#### Scenario: No stale revision remains active after successful rollout
+- **WHEN** the deployment completes successfully after a task definition change
+- **THEN** the ECS service does not remain configured to the previously active task definition revision
+
+### Requirement: Deployment verifies ECS service revision synchronization
+The system SHALL validate after deployment that the ECS service references the expected task definition revision.
+
+#### Scenario: Service revision matches expected revision
+- **WHEN** CI/CD checks the ECS service after Terraform apply
+- **THEN** the workflow confirms the service task definition matches the revision created or selected for that deployment
+
+#### Scenario: Service revision remains outdated
+- **WHEN** CI/CD checks the ECS service after Terraform apply and finds an older revision still active
+- **THEN** the workflow fails with a message that the ECS service did not advance to the expected task definition revision
+
+### Requirement: No-op deployments do not trigger unnecessary ECS rollouts
+The system SHALL avoid forcing a new ECS deployment when the task definition revision has not changed.
+
+#### Scenario: Terraform detects no task definition change
+- **WHEN** a deployment runs without any rendered change to the ECS task definition
+- **THEN** the ECS service is not restarted solely to satisfy the synchronization mechanism
+
+### Requirement: Terraform não sobrescreve task count gerenciado pelo auto-scaler
+Quando o auto-scaling está habilitado, o sistema SHALL preservar o número de tasks gerenciado pelo Application Auto Scaling entre deployments Terraform consecutivos.
+
+#### Scenario: Apply subsequente não reseta desired_count
+- **WHEN** o auto-scaler escalou o serviço para 4 tasks e um `terraform apply` é executado sem mudanças na task definition
+- **THEN** o ECS service permanece com 4 tasks em execução após o apply
+
+#### Scenario: Apply com nova task definition não afeta task count
+- **WHEN** o Terraform registra uma nova revisão da task definition e atualiza o ECS service
+- **THEN** o rolling deployment usa o número de tasks atual gerenciado pelo auto-scaler, não o valor estático da variável `desired_count`

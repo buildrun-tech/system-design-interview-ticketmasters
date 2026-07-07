@@ -5,6 +5,11 @@ output "cluster_id" {
   value       = aws_ecs_cluster.main.id
 }
 
+output "cluster_name" {
+  description = "Name of the ECS cluster"
+  value       = aws_ecs_cluster.main.name
+}
+
 output "cluster_arn" {
   description = "ARN of the ECS cluster"
   value       = aws_ecs_cluster.main.arn
@@ -13,6 +18,11 @@ output "cluster_arn" {
 output "service_id" {
   description = "ID of the ECS service"
   value       = aws_ecs_service.app.id
+}
+
+output "service_name" {
+  description = "Name of the ECS service"
+  value       = aws_ecs_service.app.name
 }
 
 output "service_arn" {
@@ -35,29 +45,29 @@ output "task_role_arn" {
   value       = aws_iam_role.ecs_task_role.arn
 }
 
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
+output "jwt_keys_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the JWT public/private key pair"
+  value       = aws_secretsmanager_secret.jwt_keys.arn
+}
+
+output "nlb_arn" {
+  description = "ARN of the Network Load Balancer"
   value       = aws_lb.main.arn
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
+output "nlb_dns_name" {
+  description = "DNS name of the Network Load Balancer"
   value       = aws_lb.main.dns_name
 }
 
-output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
+output "nlb_zone_id" {
+  description = "Zone ID of the Network Load Balancer"
   value       = aws_lb.main.zone_id
 }
 
-output "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
-  value       = aws_lb_target_group.app.arn
-}
-
-output "application_url" {
-  description = "URL to access the application"
-  value       = "http://${aws_lb.main.dns_name}"
+output "nlb_listener_arn" {
+  description = "ARN of the NLB listener (used by API Gateway integration)"
+  value       = aws_lb_listener.main.arn
 }
 
 output "cloudwatch_log_group_name" {
@@ -68,4 +78,14 @@ output "cloudwatch_log_group_name" {
 output "cloudwatch_log_group_arn" {
   description = "ARN of the CloudWatch log group"
   value       = aws_cloudwatch_log_group.app.arn
+}
+
+output "autoscaling_scale_out_policy_arn" {
+  description = "ARN of the ECS CPU Step Scaling scale-out policy"
+  value       = aws_appautoscaling_policy.ecs_step_scale_out.arn
+}
+
+output "autoscaling_scale_in_policy_arn" {
+  description = "ARN of the ECS CPU Step Scaling scale-in policy"
+  value       = aws_appautoscaling_policy.ecs_step_scale_in.arn
 }

@@ -5,49 +5,46 @@ data "aws_vpc" "existing" {
   id = var.vpc_id
 }
 
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id]
+data "aws_security_group" "default" {
+  name   = "default"
+  vpc_id = var.vpc_id
+}
+
+# Security Group for API Gateway VPC Link
+# No ingress needed — API Gateway manages ENI injection.
+# Egress is open; the NLB SG enforces inbound restriction.
+resource "aws_security_group" "apigw_vpc_link" {
+  name_prefix = "${var.name_prefix}-apigw-vpc-link-"
+  vpc_id      = var.vpc_id
+
+  egress {
+    description = "All outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-  
-  filter {
-    name   = "subnet-id"
-    values = var.public_subnet_ids
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-apigw-vpc-link-sg"
+  })
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id]
-  }
-  
-  filter {
-    name   = "subnet-id"
-    values = var.private_subnet_ids
-  }
-}
-
-# Security Group for Application Load Balancer
-resource "aws_security_group" "alb" {
-  name_prefix = "${var.name_prefix}-alb-"
+# Security Group for Network Load Balancer
+resource "aws_security_group" "nlb" {
+  name_prefix = "${var.name_prefix}-nlb-"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
-  }
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
+    description     = "Traffic from API Gateway VPC Link"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.apigw_vpc_link.id]
   }
 
   egress {
@@ -59,7 +56,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-alb-sg"
+    Name = "${var.name_prefix}-nlb-sg"
   })
 
   lifecycle {
@@ -73,11 +70,11 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "HTTP from ALB"
+    description     = "HTTP from NLB"
     from_port       = var.container_port
     to_port         = var.container_port
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    security_groups = [aws_security_group.nlb.id]
   }
 
   egress {
@@ -108,6 +105,22 @@ resource "aws_security_group" "rds" {
     to_port         = var.db_port
     protocol        = "tcp"
     security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+  ingress {
+    description = "PostgreSQL from VPC CIDR"
+    from_port   = var.db_port
+    to_port     = var.db_port
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.existing.cidr_block]
+  }
+
+  ingress {
+    description     = "PostgreSQL from default SG"
+    from_port       = var.db_port
+    to_port         = var.db_port
+    protocol        = "tcp"
+    security_groups = [data.aws_security_group.default.id]
   }
 
   tags = merge(var.common_tags, {

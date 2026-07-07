@@ -15,10 +15,23 @@
         <quarkus.platform.version>3.26.4</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
+
+        <!-- Override Testcontainers version for Docker 29.x compatibility -->
+        <!-- See: https://github.com/testcontainers/testcontainers-java/issues/11422 -->
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- IMPORTANT: Testcontainers BOM must come BEFORE Quarkus BOM -->
+            <!-- Override Testcontainers BOM for Docker 29.x compatibility -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>
@@ -90,6 +103,25 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-jwt-build</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        <!-- Observability: 4 Golden Signals via Micrometer + OTLP export -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-micrometer</artifactId>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/io.quarkiverse.micrometer.registry/quarkus-micrometer-registry-otlp -->
+        <dependency>
+            <groupId>io.quarkiverse.micrometer.registry</groupId>
+            <artifactId>quarkus-micrometer-registry-otlp</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-opentelemetry</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
